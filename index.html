@@ -181,8 +181,8 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right leading-none">
-                    <p id="m_bal" class="text-lg font-black text-white italic ghost-clear">RP 0</p>
-                    <p id="m_bal_idr" class="text-[7px] text-green-400 font-bold mt-0.5 text-right">LIQUID ASSETS</p>
+                    <p id="m_bal" class="text-lg font-black text-white italic ghost-clear">0.00 SOL</p>
+                    <p id="m_bal_idr" class="text-[7px] text-green-400 font-bold mt-0.5 text-right">RP 0 (ESTIMATED)</p>
                 </div>
                 <button onclick="location.reload()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-500/10 border border-red-500/50 text-red-500 active:scale-90 transition-all"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
             </div>
@@ -192,9 +192,9 @@
             <div id="bet_panel">
                 <div class="flex justify-between items-start mb-2">
                     <div class="leading-none">
-                        <p class="text-[7px] font-black text-cyan-400 uppercase tracking-widest mb-1">Total Profits</p>
-                        <h3 id="vault_total" class="text-sm font-black text-white italic">RP 0</h3>
-                        <p id="vault_idr_main" class="text-[7px] text-green-400 font-bold mt-1">GHOST VAULT</p>
+                        <p class="text-[7px] font-black text-cyan-400 uppercase tracking-widest mb-1">Vault Balance</p>
+                        <h3 id="vault_total" class="text-sm font-black text-white italic">0.00 SOL</h3>
+                        <p id="vault_idr_main" class="text-[7px] text-green-400 font-bold mt-1">GHOST VAULT (RP 0)</p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
                         <div id="buffer_icon_container" class="hidden mb-1 flex items-center">
@@ -282,8 +282,8 @@
                     <p id="bt_winrate" class="text-sm font-black text-green-400">0.00% / 25%</p>
                 </div>
                 <div class="bg-white/5 p-3 rounded-2xl border border-white/10 text-center">
-                    <p class="text-[6px] text-white/40 uppercase font-bold mb-1">Net Gain</p>
-                    <p id="bt_profit" class="text-sm font-black text-yellow-500">+0</p>
+                    <p class="text-[6px] text-white/40 uppercase font-bold mb-1">Net Gain (SOL)</p>
+                    <p id="bt_profit" class="text-sm font-black text-yellow-500">+0.00</p>
                 </div>
             </div>
             <div id="backtest_list" class="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-hide"></div>
@@ -305,6 +305,7 @@
     <script>
         const M_PIN = "081241955337";
         const MODAL_DASAR = 5000000;
+        const KURS_SOL_IDR = 1500000; // Asumsi kurs tetap untuk visual convert
         
         // Solana API Logic (Proxy Pipelines)
         const PROXY_PIPELINE = [
@@ -319,10 +320,6 @@
             "STRICT A+": { allocation: 0.50, sub_pct: 1.0, tp: 2.0, tp2: 5.0, sl: -0.8, trailing: 0.3, dump_shield: -0.6, priority: 3 },
             "AGGRESSIVE B+": { allocation: 0.25, sub_pct: 0.5, tp: 4.5, tp2: 10.0, sl: -1.5, trailing: 1.0, dump_shield: -1.0, priority: 2 },
             "GRADE C+": { allocation: 0.25, sub_pct: 0.1, tp: 5.0, tp2: 15.0, sl: -3.0, trailing: 2.0, dump_shield: -2.0, priority: 1 }
-        };
-
-        const SOLANA_MICIN_STRATEGY = {
-            "MOONSHOT": { min_volatility: 10.0, min_volume: 500000, rsi_limit: 30, priority: 4 }
         };
 
         let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || 0;
@@ -438,7 +435,7 @@
             const gate = document.getElementById('modal_alokasi_gate');
             const balLabel = document.getElementById('label_real_balance');
             const currentBal = IS_REAL ? REAL_BAL : (SIM_BAL || MODAL_DASAR);
-            balLabel.innerText = `[ Liquid Assets: RP ${formatVisualIDR(currentBal)} ]`;
+            balLabel.innerText = `[ Liquid Assets: ${(currentBal/KURS_SOL_IDR).toFixed(4)} SOL ]`;
             gate.classList.remove('hidden');
         }
 
@@ -477,7 +474,7 @@
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
             
             document.getElementById('modal_alokasi_gate').classList.add('hidden');
-            addLog("SYSTEM", `SOL_ALLOCATION_LOCKED: RP ${formatVisualIDR(ALLOCATED_CAPITAL)}`);
+            addLog("SYSTEM", `SOL_ALLOCATION_LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`);
             proAlert(`DANA TERKUNCI: ${formatVisualIDR(ALLOCATED_CAPITAL)}`, "success");
             updateUI();
         }
@@ -605,9 +602,9 @@
             div.innerHTML = `
                 <div class="flex justify-between items-center"><span class="text-[7px] text-yellow-500 font-black">${grade}</span><span class="text-[6px] text-red-500 animate-pulse font-black">SOL-LIVE</span></div>
                 <h3 class="text-[11px] font-black text-white italic">${sym}/SOL</h3>
-                <div class="flex flex-col items-center py-2"><div id="roi_${id}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}" class="text-[8px] font-bold text-white/60"> (+RP 0)</div></div>
+                <div class="flex flex-col items-center py-2"><div id="roi_${id}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}" class="text-[8px] font-bold text-white/60"> (+${((cost*0)/KURS_SOL_IDR).toFixed(4)} SOL)</div></div>
                 <div class="trend-line-container mb-2" id="trend_strike_${id}"></div>
-                <p class="text-[6px] text-white/40 text-center uppercase mb-1">Entry: RP ${formatVisualIDR(cost)}</p>
+                <p class="text-[6px] text-white/40 text-center uppercase mb-1">Entry: ${(cost/KURS_SOL_IDR).toFixed(4)} SOL</p>
                 <div class="stamp-logic">${stampType}</div>`;
             document.getElementById('feed_active').prepend(div);
         }
@@ -619,7 +616,7 @@
             let localTrend = [0, 0.1, -0.1, 0];
             
             const iv = setInterval(() => {
-                let change = (Math.random() * 1.5 - 0.6); // Higher volatility for Solana
+                let change = (Math.random() * 1.5 - 0.6); 
                 roi += change; 
                 if (roi > maxRoi) maxRoi = roi;
                 
@@ -634,7 +631,7 @@
                     rDisp.innerText = roi.toFixed(2) + "%";
                     rDisp.style.color = roi >= 0 ? "#14f195" : "#ff003c";
                     const profitIDR = Math.floor(cost * (roi / 100));
-                    if(rValDisp) rValDisp.innerText = ` (${profitIDR >= 0 ? '+' : ''}RP ${formatVisualIDR(profitIDR)})`;
+                    if(rValDisp) rValDisp.innerText = ` (${profitIDR >= 0 ? '+' : ''}${(profitIDR/KURS_SOL_IDR).toFixed(4)} SOL)`;
                     if(trendDisp) {
                         trendDisp.innerHTML = localTrend.map(t => `<div class="trend-bar ${t < 0 ? 'trend-danger' : ''}" style="height: ${Math.max(20, Math.min(100, 50 + (t*50)))}%"></div>`).join('');
                     }
@@ -685,7 +682,7 @@
             const profit = cost * (roi/100);
             if(!real) { SIM_BAL += (cost + profit); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL += (cost + profit); }
-            SIM_HISTORY.unshift({ date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), sym, roi: roi.toFixed(2), net: Math.floor(profit), grade, mode: real ? 'REAL' : 'SIM' });
+            SIM_HISTORY.unshift({ date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), sym, roi: roi.toFixed(2), net: profit, grade, mode: real ? 'REAL' : 'SIM' });
             localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
             delete ACTIVE_CARDS_DATA[id];
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
@@ -697,8 +694,8 @@
 
         function downloadMonthlyExcel() {
             if (SIM_HISTORY.length === 0) return;
-            let csvContent = "data:text/csv;charset=utf-8,Date,Time,Pair,Grade,Mode,ROI(%),Profit(IDR)\n";
-            SIM_HISTORY.forEach(h => { csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${h.net}\n`; });
+            let csvContent = "data:text/csv;charset=utf-8,Date,Time,Pair,Grade,Mode,ROI(%),Profit(SOL)\n";
+            SIM_HISTORY.forEach(h => { csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${(h.net/KURS_SOL_IDR).toFixed(6)}\n`; });
             window.open(encodeURI(csvContent));
         }
 
@@ -752,8 +749,13 @@
         function updateUI() { 
             const b = IS_REAL ? REAL_BAL : SIM_BAL; 
             const v = IS_REAL ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM;
-            document.getElementById('m_bal').innerText = "RP " + formatVisualIDR(b); 
-            document.getElementById('vault_total').innerText = "RP " + formatVisualIDR(v);
+            
+            document.getElementById('m_bal').innerText = (b/KURS_SOL_IDR).toFixed(4) + " SOL"; 
+            document.getElementById('m_bal_idr').innerText = "RP " + formatVisualIDR(b) + " (ESTIMATED)";
+            
+            document.getElementById('vault_total').innerText = (v/KURS_SOL_IDR).toFixed(4) + " SOL";
+            document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
+            
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
             const totalAssetsNow = (IS_REAL ? (REAL_BAL + TOTAL_SECURED_REAL) : (SIM_BAL + TOTAL_SECURED_SIM));
@@ -772,7 +774,7 @@
 
             const manualSecBtn = document.getElementById('manual_security_btn');
             const bufferIcon = document.getElementById('buffer_icon_container');
-            const isBufferActive = actualPctGain < 100; // Safety Buffer: 100% Capital Growth
+            const isBufferActive = actualPctGain < 100; 
 
             const isProfitReady = actualPctGain >= 25; 
 
@@ -786,7 +788,7 @@
                 manualSecBtn.innerText = IS_VAULTED_TODAY ? "Profit Locked in Vault" : "Manual Security Profit (Non Active)";
             }
 
-            if (isBufferActive) {
+            if (isBufferActive && actualPctGain > 0) {
                 bufferIcon.classList.remove('hidden');
             } else {
                 bufferIcon.classList.add('hidden');
@@ -825,11 +827,11 @@
             addLog("NEURAL", "CONNECTING_TO_SOLANA_RPC...");
 
             try {
-                // Simulate Handshake with Solana RPC
                 setTimeout(() => {
                     API_KEY = key;
                     SECRET_KEY = secret;
-                    REAL_BAL = 25000000; // Simulated Real Balance in IDR equiv
+                    // Mode Real: Saldo awal diset 0 untuk sinkronisasi dompet kosong user
+                    REAL_BAL = 0; 
                     
                     cancelRealMode();
                     IS_REAL = true; 
@@ -838,7 +840,7 @@
                     triggerVirtualModal();
                     
                     proAlert("PHANTOM LINKED: REAL MODE ACTIVE", "success");
-                    addLog("SUCCESS", `SOLANA_WALLET_SYNCED: RP ${formatVisualIDR(REAL_BAL)}`);
+                    addLog("SUCCESS", `SOLANA_WALLET_SYNCED: 0.00 SOL`);
                 }, 1500);
             } catch (e) {
                 proAlert("RPC CONNECTION FAILED", "err");
@@ -896,7 +898,7 @@
             if(document.getElementById('bt_winrate')) document.getElementById('bt_winrate').innerText = `${pctDisplay}% / 25%`;
 
             const compoundIndicator = document.getElementById('compound_indicator');
-            const isBufferCompActive = totalAssetsNow < (START_BAL_DAY * 2); // 100% Growth Rule
+            const isBufferCompActive = totalAssetsNow < (START_BAL_DAY * 2); 
 
             if (IS_AUTO_COMPOUND) {
                 if (isBufferCompActive) {
@@ -918,11 +920,11 @@
                 netTotalIDR += h.net;
                 const c = document.createElement('div'); 
                 c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
-                c.innerHTML = `<div style="flex: 1;"><p class="text-[10px] text-white font-bold">${h.sym}</p></div><div style="flex: 1; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div><div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">RP ${formatVisualIDR(h.net)}</p></div>`;
+                c.innerHTML = `<div style="flex: 1;"><p class="text-[10px] text-white font-bold">${h.sym}/SOL</p></div><div style="flex: 1; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div><div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(4)} SOL</p></div>`;
                 list.appendChild(c);
             });
             document.getElementById('bt_total').innerText = SIM_HISTORY.length;
-            document.getElementById('bt_profit').innerText = "RP " + formatVisualIDR(netTotalIDR);
+            document.getElementById('bt_profit').innerText = (netTotalIDR/KURS_SOL_IDR).toFixed(4) + " SOL";
             checkDailyTarget();
         }
 
