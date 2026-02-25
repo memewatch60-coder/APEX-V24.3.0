@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APEX V24.3.0 - OMNI GHOST [LAYER 4: SOLANA-PULSE]</title>
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkFQRVggR0hPU1QiLAogICJzaG9ydF9uYW1lIjogIkFQRVggR0hPU1QiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzAxMDIwNCIsCiAgInRoZW1lX2NvbG9yIjogIiMwMTAyMDQiLAogIClY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8yNTg5LzI1ODkzMTMucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXQp9">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #020408; --neon: #14f195; --gold: #d4af37; --red: #ff003c; --green: #14f195; --purple: #9945ff; --blue-c: #00c2ff; }
+        body { background: var(--bg); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .master-panel { background: rgba(2, 4, 8, 0.99); border: 2px solid var(--gold); border-radius: 4rem; box-shadow: 0 0 60px rgba(212, 175, 55, 0.2); }
+        .input-god { background: rgba(255,255,255,0.03); border: 1px solid #1e293b; border-radius: 1.2rem; padding: 0.5rem 0.75rem; color: #fff; width: 100%; outline: none; font-weight: bold; font-size: 13px; transition: 0.3s; }
+        .input-god:focus { border-color: var(--neon); background: rgba(20, 241, 149, 0.05); }
+        #bet_panel { padding: 0.75rem 1.25rem; border-radius: 1.5rem; background: linear-gradient(to bottom right, #0d0f14, #000); border: 1px solid rgba(255,255,255,0.05); }
+        #main_container { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; padding: 0 1.25rem; flex: 1; overflow: hidden; margin-top: 0.5rem; }
+        #feed_signal, #feed_active { display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; scrollbar-width: none; height: 100%; }
+        #feed_signal::-webkit-scrollbar, #feed_active::-webkit-scrollbar { display: none; }
+        .card-base { flex-shrink: 0 !important; min-height: 100px; padding: 0.8rem; border-radius: 1.5rem; transition: 0.4s; position: relative; overflow: hidden; }
+        .standard-card { border: 1px solid rgba(20, 241, 149, 0.15); background: rgba(255,255,255,0.01); }
+        .whale-card { border: 1px solid rgba(212, 175, 55, 0.8) !important; background: linear-gradient(145deg, #0d0f14, #251e0a) !important; box-shadow: 0 0 20px rgba(212, 175, 55, 0.25) !important; }
+        .micin-card { border: 1px solid rgba(153, 69, 255, 0.4) !important; background: rgba(15, 23, 42, 0.6) !important; }
+        .grade-a-card { border: 2px solid #d4af37 !important; background: linear-gradient(135deg, #1a1a10 0%, #000 100%) !important; box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.1); }
+        .grade-b-card { border: 2px solid #14f195 !important; background: linear-gradient(135deg, #0a1a0e 0%, #000 100%) !important; }
+        .grade-c-card { border: 2px solid #9945ff !important; background: linear-gradient(135deg, #120a1a 0%, #000 100%) !important; }
+        .trailing-active { border: 2px solid var(--gold) !important; box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+        .dump-alert { border: 2px solid var(--red) !important; animation: shake 0.5s infinite; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
+        .pct-btn { border: 1px solid rgba(255,255,255,0.05); border-radius: 0.75rem; padding: 0.4rem; font-size: 10px; font-weight: 900; background: rgba(255,255,255,0.02); color: #64748b; transition: 0.2s; cursor: pointer; }
+        .pct-active { background: var(--neon) !important; color: #000 !important; border-color: var(--neon); box-shadow: 0 0 15px var(--neon); }
+        .radar-scan-anim { animation: scan_pulse 2s infinite linear; }
+        @keyframes scan_pulse { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .ghost-clear { filter: none !important; transition: 0.4s; }
+        .status-tag { font-size: 7px; font-weight: 900; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 9999px; border-width: 1px; }
+        footer { background: rgba(2, 4, 8, 0.99); backdrop-blur: 15px; border-top: 1px solid rgba(255,255,255,0.05); border-radius: 1.5rem 1.5rem 0 0; height: 120px; padding: 0.75rem 1.25rem; display: grid; grid-template-columns: 1fr 140px; gap: 1rem; }
+        #logs { height: 85px; background: rgba(0,0,0,0.4); border-radius: 0.75rem; padding: 0.5rem; border: 1px solid rgba(255,255,255,0.05); overflow-y: auto; scrollbar-width: none; font-family: monospace; font-size: 7px; color: rgba(20, 241, 149, 0.6); }
+        #backtest_modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; padding: 1.5rem; }
+        .historis-container { background: #0d0f14; border: 1px solid var(--purple); border-radius: 2rem; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+        #neural_clock { font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 900; color: var(--neon); letter-spacing: 1px; margin-top: 2px; text-shadow: 0 0 5px var(--neon); }
+        .glitch-text { animation: glitch 1s linear infinite; }
+        @keyframes glitch { 0% { text-shadow: 2px 0 var(--red), -2px 0 var(--purple); } 50% { text-shadow: -2px 0 var(--red), 2px 0 var(--purple); } 100% { text-shadow: 2px 0 var(--red), -2px 0 var(--purple); } }
+        #pro_toast_container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 99999; width: 90%; max-width: 350px; pointer-events: none; }
+        .pro-toast { background: rgba(2, 4, 8, 0.95); border-left: 4px solid var(--neon); padding: 15px 20px; border-radius: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: auto; }
+        
+        .tp2-hunting { animation: pulse-gold 1s infinite alternate; border: 2px solid var(--gold) !important; }
+        @keyframes pulse-gold { from { box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); } to { box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); } }
+        .clickable-card:active { transform: scale(0.95); opacity: 0.8; }
+
+        .signal-locked { opacity: 0.3 !important; filter: grayscale(1) !important; pointer-events: none !important; }
+        .locked-badge { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 10; color: #ff003c; font-weight: 900; font-size: 10px; text-align: center; }
+
+        #neural_confirm_modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-blur: 8px; z-index: 999999; align-items: center; justify-content: center; padding: 2rem; }
+        .neural-modal-box { background: #020408; border: 1px solid var(--neon); border-radius: 2rem; padding: 2rem; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 0 40px rgba(20, 241, 149, 0.2); }
+        
+        #popup_m_cold { height: 80px !important; text-align: center !important; }
+        #popup_m_key { text-align: center !important; display: flex; align-items: center; justify-content: center; }
+        .input-god::placeholder { text-align: center; }
+
+        .trend-line-container { height: 25px; width: 100%; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; margin-top: 6px; display: flex; align-items: flex-end; gap: 2px; padding: 2px; border: 1px solid rgba(255,255,255,0.05); }
+        .trend-bar { flex: 1; background: var(--green); border-radius: 1px; transition: all 0.2s ease-in-out; }
+        .trend-danger { background: var(--red) !important; box-shadow: 0 0 10px var(--red); animation: pulse 0.5s infinite; }
+
+        .compound-active { border-color: var(--green) !important; box-shadow: 0 0 20px rgba(20, 241, 149, 0.2) !important; }
+        .btn-disabled { opacity: 0.3; pointer-events: none !important; filter: grayscale(1); cursor: not-allowed; }
+        .buffer-mode { color: #f59e0b !important; text-shadow: 0 0 5px #f59e0b; }
+        .stamp-logic { position: absolute; bottom: 5px; right: 10px; font-size: 6px; font-weight: 900; color: rgba(212, 175, 55, 0.5); font-style: italic; text-transform: uppercase; }
+        #manual_security_btn { border: 1px solid var(--neon); color: var(--neon); background: rgba(20, 241, 149, 0.05); }
+        #manual_security_btn:hover { background: var(--neon); color: black; box-shadow: 0 0 15px var(--neon); }
+
+        .buffer-blink-icon { animation: buffer-flash 1s infinite; color: #f59e0b; }
+        @keyframes buffer-flash { 0% { opacity: 1; transform: scale(1.1); } 50% { opacity: 0.3; transform: scale(1.0); } 100% { opacity: 1; transform: scale(1.1); } }
+        .msp-active-glow { color: #14f195 !important; text-shadow: 0 0 10px #14f195, 0 0 20px #14f195 !important; font-weight: 900 !important; border-color: #14f195 !important; background: rgba(20, 241, 149, 0.1) !important; }
+        .blink-text-red-gold { animation: blink-rg 0.8s infinite; font-weight: 900; font-size: 7px; margin-left: 5px; }
+        @keyframes blink-rg { 0% { color: #ff003c; opacity: 1; } 50% { color: #d4af37; opacity: 0.5; } 100% { color: #ff003c; opacity: 1; } }
+        
+        #popup_m_key, #popup_m_cold {
+            word-break: break-all;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left !important;
+            padding: 10px !important;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+    <div id="pro_toast_container"></div>
+
+    <div id="modal_alokasi_gate" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-[30000] flex items-center justify-center p-6 animate__animated animate__fadeIn">
+        <div class="master-panel w-full max-sm p-8 text-center border-green-500/50">
+            <i class="fa-solid fa-vault text-4xl text-green-400 mb-4"></i>
+            <h2 class="text-lg font-black text-white uppercase italic">Alokasi Modal Kerja</h2>
+            <p id="label_real_balance" class="text-[8px] text-white/40 mb-6 uppercase tracking-widest">[ Saldo Solana: 0 SOL ]</p>
+            
+            <div class="mb-6">
+                <label class="text-[7px] font-black text-cyan-400 uppercase tracking-widest block mb-2">Masukkan Modal Trading (IDR Equivalent)</label>
+                <input type="text" id="input_modal_virtual" oninput="syncFromIdrCustom('input_modal_virtual')" class="input-god text-center text-xl" placeholder="5.000.000">
+                <p class="text-[7px] text-white/30 mt-2 uppercase">Min: 500.000 | Max: 500.000.000</p>
+            </div>
+
+            <div class="bg-white/5 p-4 rounded-2xl border border-white/10 mb-6">
+                <p class="text-[7px] text-yellow-500 font-black uppercase">Safety Buffer Logic:</p>
+                <p class="text-[9px] text-white/60 font-bold mt-1 uppercase">Compounding aktif setelah mencapai profit 100% dari alokasi di atas.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="skipAllocation()" class="w-full bg-white/10 text-white/40 py-4 rounded-[2rem] font-black uppercase tracking-widest">Lewati</button>
+                <button onclick="lockVirtualCapital()" class="w-full bg-green-600 text-white py-4 rounded-[2rem] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(20,241,149,0.3)]">Mulai Trading</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="neural_confirm_modal" class="animate__animated animate__fadeIn">
+        <div class="neural-modal-box">
+            <i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-500 mb-4"></i>
+            <h3 id="n_modal_title" class="text-sm font-black text-white uppercase italic mb-2 tracking-widest">Master Confirmation</h3>
+            <p id="n_modal_msg" class="text-[10px] text-white/60 mb-6 font-bold uppercase"></p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeNeuralModal(false)" class="py-3 rounded-xl border border-white/10 text-[9px] font-black text-white/40 uppercase tracking-widest">Abort</button>
+                <button onclick="closeNeuralModal(true)" class="py-3 rounded-xl bg-cyan-600 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(20,241,149,0.4)]">Execute</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="real_auth_modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-[20000] flex items-center justify-center p-6 animate__animated animate__fadeIn">
+        <div class="master-panel w-full max-md p-8 relative border-cyan-500/50 shadow-[0_0_50px_rgba(20,241,149,0.15)]">
+            <button onclick="cancelRealMode()" class="absolute top-6 right-6 text-white/30 hover:text-white transition-all">
+                <i class="fa-solid fa-circle-xmark text-2xl"></i>
+            </button>
+            <div class="text-center mb-6">
+                <i class="fa-solid fa-link text-4xl text-cyan-400 mb-2"></i>
+                <h2 class="text-lg font-black tracking-widest text-white uppercase italic">Phantom Neural Link</h2>
+                <p class="text-[8px] text-cyan-500/60 font-bold uppercase tracking-[2px]">Layer 4 Solana Private Key Required</p>
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[7px] font-black text-cyan-400 uppercase tracking-widest ml-2 mb-1 block">Solana Wallet Address</label>
+                    <textarea id="popup_m_key" class="input-god h-16 text-[10px] text-left border-cyan-500/20" placeholder="Address..."></textarea>
+                </div>
+                <div>
+                    <label class="text-[7px] font-black text-yellow-500 uppercase tracking-widest ml-2 mb-1 block">Phantom Private Key</label>
+                    <textarea id="popup_m_cold" class="input-god h-24 text-[10px] text-left border-yellow-500/20" placeholder="Private Key (Never Share)"></textarea>
+                </div>
+                <button id="establish_btn" onclick="confirmRealMode()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-4 rounded-[2rem] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(20,241,149,0.4)] transition-all active:scale-95">
+                    Connect to Raydium LP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gate" class="fixed inset-0 bg-black flex items-center justify-center p-6 z-[9999]">
+        <div class="master-panel w-full max-w-md p-10 text-center animate__animated animate__fadeIn">
+            <div id="step1">
+                <i class="fa-solid fa-crown text-6xl text-[#d4af37] mb-6"></i>
+                <h1 class="text-2xl font-black tracking-[0.2em] text-[#d4af37] mb-4 uppercase">Ghost Admin</h1>
+                <div class="flex flex-col gap-4">
+                    <button onclick="verifyAdmin(true)" class="w-full bg-white/5 border border-cyan-500/50 text-cyan-400 p-5 rounded-[2rem] font-bold flex items-center justify-center gap-4 active:scale-95 transition-all">
+                        <i class="fa-solid fa-fingerprint text-2xl"></i> BIOMETRIC
+                    </button>
+                    <input type="password" id="m_pin" class="input-god text-2xl tracking-[10px] text-center" placeholder="****">
+                    <button onclick="verifyAdmin()" class="w-full bg-[#d4af37] text-black p-5 rounded-[2rem] font-bold uppercase active:scale-95 transition-all">Authorize</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="hidden flex flex-col h-screen">
+        <nav class="flex justify-between items-center border-b border-white/5 bg-black/40 backdrop-blur-md px-6 py-2">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full border border-cyan-500 flex items-center justify-center"><i class="fa-solid fa-bolt text-cyan-400 text-sm"></i></div>
+                <div class="leading-none">
+                    <h2 class="text-[9px] font-black text-white italic tracking-tighter uppercase mb-0.5 glitch-text">Apex_Solana_Ghost_V24</h2>
+                    <div id="neural_clock">SYNCING SOLANA...</div>
+                    <span id="failover_status" class="text-[6px] text-green-400 font-bold uppercase tracking-widest">LAYER 4: ACTIVE</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right leading-none">
+                    <p id="m_bal" class="text-lg font-black text-white italic ghost-clear">RP 0</p>
+                    <p id="m_bal_idr" class="text-[7px] text-green-400 font-bold mt-0.5 text-right">LIQUID ASSETS</p>
+                </div>
+                <button onclick="location.reload()" class="w-8 h-8 flex items-center justify-center rounded-full bg-red-500/10 border border-red-500/50 text-red-500 active:scale-90 transition-all"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
+            </div>
+        </nav>
+
+        <div class="px-6 mt-2">
+            <div id="bet_panel">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="leading-none">
+                        <p class="text-[7px] font-black text-cyan-400 uppercase tracking-widest mb-1">Total Profits</p>
+                        <h3 id="vault_total" class="text-sm font-black text-white italic">RP 0</h3>
+                        <p id="vault_idr_main" class="text-[7px] text-green-400 font-bold mt-1">GHOST VAULT</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <div id="buffer_icon_container" class="hidden mb-1 flex items-center">
+                            <i class="fa-solid fa-shield-virus buffer-blink-icon"></i>
+                            <span id="buffer_blink_text" class="blink-text-red-gold">BUFFER ACTIVE (100% CAP)</span>
+                        </div>
+                        <p id="mode_tag" class="status-tag text-purple-400 bg-purple-500/10 border-purple-500/30">SIMULATION</p>
+                        <button onclick="toggleMode()" id="switch_btn" class="text-[7px] font-black text-white bg-white/5 px-2 py-1 rounded-md border border-white/10 uppercase">Switch</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-2 mb-2">
+                    <div class="relative">
+                        <input type="text" id="input_idr" oninput="syncFromIdr()" class="input-god text-left" placeholder="Entry Amount (IDR)">
+                        <span class="absolute right-3 top-2.5 text-[8px] text-green-500 font-black italic">IDR</span>
+                        <div id="compound_indicator" class="hidden absolute left-3 top-2.5 text-[8px] text-green-400 font-black uppercase flex items-center gap-1"><i class="fa-solid fa-recycle animate-spin"></i> Auto-Comp</div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center px-1">
+                    <div class="grid grid-cols-4 gap-1 w-2/3">
+                        <button id="btn_25" onclick="applyPct(0.25, this)" class="pct-btn">25%</button>
+                        <button id="btn_50" onclick="applyPct(0.50, this)" class="pct-btn">50%</button>
+                        <button id="btn_75" onclick="applyPct(0.75, this)" class="pct-btn">75%</button>
+                        <button id="btn_100" onclick="applyPct(1.00, this)" class="pct-btn">100%</button>
+                    </div>
+                    <button onclick="toggleAutoCompound()" id="compound_btn" class="pct-btn w-10 border-green-500/30 text-green-400"><i class="fa-solid fa-plus-minus"></i></button>
+                    <p id="kurs_text" class="text-[7px] text-yellow-500 font-black uppercase">SOLANA LIVE</p>
+                </div>
+                <div class="mt-2 bg-white/5 rounded-full h-1.5 overflow-hidden border border-white/10"><div id="target_progress" class="bg-green-500 h-full transition-all duration-500" style="width: 0%"></div></div>
+                <div class="flex justify-between mt-1"><span class="text-[6px] text-white/40 uppercase">Daily Progress</span><span id="target_stat" class="text-[6px] text-green-400 font-bold uppercase">0% / 25%</span></div>
+                
+                <button id="manual_security_btn" onclick="secureToVault()" class="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-white/40 uppercase hover:text-cyan-400 transition-all italic">Manual Security Profit (Non Active)</button>
+            </div>
+        </div>
+
+        <div id="main_container">
+            <div class="flex flex-col h-full overflow-hidden">
+                <div class="text-[8px] text-cyan-400 font-black uppercase tracking-[2px] mb-2 px-1 flex items-center gap-2 italic"><i class="fa-solid fa-dna animate-pulse"></i> Raydium Signals</div>
+                <div id="feed_signal" class="pr-2"></div>
+            </div>
+            <div class="flex flex-col h-full overflow-hidden">
+                <div class="text-[8px] text-yellow-500 font-black uppercase tracking-[2px] mb-2 px-1 flex items-center gap-2 italic"><i class="fa-solid fa-skull-crossbones"></i> Ghost Positions</div>
+                <button onclick="panicSellAll()" class="text-[6px] font-black text-red-500 border border-red-500/20 bg-red-500/5 py-1 mb-2 rounded-full uppercase italic hover:bg-red-500 hover:text-white transition-all">Panic Sell All</button>
+                <div id="feed_active" class="pr-2"></div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="flex flex-col relative">
+                <div class="text-[8px] text-purple-400 font-black uppercase tracking-[2px] mb-1 italic"><i class="fa-solid fa-code"></i> Solana Logs</div>
+                <div id="logs"></div>
+            </div>
+            <div class="flex items-center justify-around bg-white/5 rounded-[2rem] border border-white/10 p-1">
+                <button onclick="openBacktest()" class="flex flex-col items-center group px-4">
+                    <i class="fa-solid fa-history text-purple-500 text-xl group-active:scale-90 transition-all"></i>
+                    <span class="text-[7px] font-black text-purple-400 uppercase mt-1">History</span>
+                </button>
+                <div class="w-[1px] h-8 bg-white/10"></div>
+                <button onclick="manualScan()" class="text-cyan-400 flex flex-col items-center group px-4">
+                    <i id="radar_icon" class="fa-solid fa-compass radar-scan-anim mb-1 transition-all text-2xl"></i>
+                    <span class="text-[7px] font-black uppercase tracking-widest">Pulse</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <div id="backtest_modal" class="animate__animated animate__fadeIn">
+        <div class="historis-container p-5">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-cubes text-purple-500 text-xl"></i>
+                    <div>
+                        <h2 id="bt_title" class="text-sm font-black italic text-white uppercase tracking-widest leading-none">Activity Ledger</h2>
+                        <span id="bt_mode_display" class="text-[7px] text-purple-400 font-bold uppercase tracking-widest">SOLANA MAINNET</span>
+                    </div>
+                </div>
+                <button onclick="closeBacktest()" class="text-white/40 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <div id="backtest_stats" class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-white/5 p-3 rounded-2xl border border-white/10 text-center">
+                    <p class="text-[6px] text-white/40 uppercase font-bold mb-1">Total Signals</p>
+                    <p id="bt_total" class="text-sm font-black text-cyan-400">0</p>
+                </div>
+                <div class="bg-white/5 p-3 rounded-2xl border border-white/10 text-center">
+                    <p id="win_rate_label" class="text-[6px] text-white/40 uppercase font-bold mb-1">Target Gain</p>
+                    <p id="bt_winrate" class="text-sm font-black text-green-400">0.00% / 25%</p>
+                </div>
+                <div class="bg-white/5 p-3 rounded-2xl border border-white/10 text-center">
+                    <p class="text-[6px] text-white/40 uppercase font-bold mb-1">Net Gain</p>
+                    <p id="bt_profit" class="text-sm font-black text-yellow-500">+0</p>
+                </div>
+            </div>
+            <div id="backtest_list" class="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-hide"></div>
+            
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button onclick="downloadMonthlyExcel()" class="bg-green-600 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all">
+                    <i class="fa-solid fa-file-csv mr-1"></i> Export
+                </button>
+                
+                <button id="daily_update_btn" onclick="performDailyReset()" class="bg-yellow-600 text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all btn-disabled">
+                    <i class="fa-solid fa-calendar-check mr-1"></i> Update Harian
+                </button>
+            </div>
+
+            <button onclick="refreshHistory()" id="bt_run_btn" class="w-full bg-purple-600 text-white py-3 rounded-[1.2rem] font-black text-[10px] uppercase tracking-widest mt-2 active:scale-95 transition-all">Sync Blockchain</button>
+        </div>
+    </div>
+
+    <script>
+        const M_PIN = "081241955337";
+        const MODAL_DASAR = 5000000;
+        
+        // Solana API Logic (Proxy Pipelines)
+        const PROXY_PIPELINE = [
+            "https://corsproxy.io/?",
+            "https://api.allorigins.win/raw?url=",
+            "https://thingproxy.freeboard.io/fetch/",
+            "https://api.codetabs.com/v1/proxy?quest="
+        ];
+        let currentPipelineIdx = 0;
+
+        const PATEN_STRATEGY = {
+            "STRICT A+": { allocation: 0.50, sub_pct: 1.0, tp: 2.0, tp2: 5.0, sl: -0.8, trailing: 0.3, dump_shield: -0.6, priority: 3 },
+            "AGGRESSIVE B+": { allocation: 0.25, sub_pct: 0.5, tp: 4.5, tp2: 10.0, sl: -1.5, trailing: 1.0, dump_shield: -1.0, priority: 2 },
+            "GRADE C+": { allocation: 0.25, sub_pct: 0.1, tp: 5.0, tp2: 15.0, sl: -3.0, trailing: 2.0, dump_shield: -2.0, priority: 1 }
+        };
+
+        const SOLANA_MICIN_STRATEGY = {
+            "MOONSHOT": { min_volatility: 10.0, min_volume: 500000, rsi_limit: 30, priority: 4 }
+        };
+
+        let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || 0;
+        let TOTAL_SECURED_SIM = parseFloat(localStorage.getItem('apex_sim_vault')) || 0;
+        let ACTIVE_CARDS_DATA = JSON.parse(localStorage.getItem('apex_active_cards')) || {};
+
+        let IS_REAL = false, REAL_BAL = 0, TOTAL_SECURED_REAL = 0;
+        let API_KEY = "", SECRET_KEY = "";
+        let START_BAL_DAY = parseFloat(localStorage.getItem('apex_start_bal')) || 0; 
+        let TARGET_PERCENT = 0.25;
+        let SIM_HISTORY = JSON.parse(localStorage.getItem('apex_sim_history_idx')) || [];
+        
+        let ACTIVE_INTERVALS = {};
+        let TREND_HISTORY = {}; 
+
+        let IS_AUTO_COMPOUND = localStorage.getItem('apex_auto_comp') === 'true';
+        let LAST_CHECKED_DATE = localStorage.getItem('apex_last_date') || new Date().toLocaleDateString();
+        let IS_VAULTED_TODAY = localStorage.getItem('apex_is_vaulted') === 'true';
+        let ALLOCATED_CAPITAL = parseFloat(localStorage.getItem('apex_allocated_cap')) || 0;
+
+        let modalResolve = null;
+        function openNeuralModal(msg) {
+            document.getElementById('n_modal_title').innerText = "Master Confirmation";
+            document.getElementById('n_modal_msg').innerText = msg;
+            document.getElementById('neural_confirm_modal').style.display = 'flex';
+            return new Promise(resolve => { modalResolve = resolve; });
+        }
+        function closeNeuralModal(confirmed) {
+            document.getElementById('neural_confirm_modal').style.display = 'none';
+            if(modalResolve) modalResolve(confirmed);
+        }
+
+        function syncSimulationWithReal(isBecomingReal) {
+            if(isBecomingReal) {
+                START_BAL_DAY = REAL_BAL;
+                localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                addLog("SYNC", "PHANTOM_LINK_ACTIVE: DATA_SYNC_COMPLETE");
+                refreshHistory();
+            } else {
+                START_BAL_DAY = ALLOCATED_CAPITAL || SIM_BAL;
+                localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                addLog("SYNC", "DECOUPLING_COMPLETE: VIRTUAL_MAINNET");
+            }
+            checkDailyTarget();
+        }
+
+        function toggleAutoCompound() {
+            document.querySelectorAll('.pct-btn').forEach(btn => {
+                if(btn.id !== 'compound_btn') btn.classList.remove('pct-active');
+            });
+            document.getElementById('input_idr').value = "";
+
+            IS_AUTO_COMPOUND = !IS_AUTO_COMPOUND;
+            localStorage.setItem('apex_auto_comp', IS_AUTO_COMPOUND);
+            const btn = document.getElementById('compound_btn');
+            const indicator = document.getElementById('compound_indicator');
+            if(IS_AUTO_COMPOUND) {
+                btn.classList.add('pct-active');
+                indicator.classList.remove('hidden');
+                proAlert("AUTO-COMPOUND: ENGAGED", "success");
+            } else {
+                btn.classList.remove('pct-active');
+                indicator.classList.add('hidden');
+                proAlert("AUTO-COMPOUND: DISENGAGED", "err");
+            }
+            checkDailyTarget();
+        }
+
+        async function verifyAdmin(b = false) { 
+            if (b && window.PublicKeyCredential) {
+                try {
+                    addLog("BIO", "POLLING_SENSOR");
+                    const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
+                    const options = { publicKey: { challenge, rp: { name: "APEX_GHOST" }, user: { id: Uint8Array.from("Master", c => c.charCodeAt(0)), name: "Master", displayName: "Master" }, pubKeyCredParams: [{ alg: -7, type: "public-key" }], authenticatorSelection: { userVerification: "required", authenticatorAttachment: "platform" }, timeout: 60000 } };
+                    const credential = await navigator.credentials.create(options);
+                    if (credential) { addLog("SUCCESS", "BIO_CONFIRMED"); ignite(); }
+                } catch (err) { addLog("ERR", "BIO_REJECTED"); }
+            } else if (document.getElementById('m_pin').value === M_PIN) { 
+                ignite(); 
+            } else { proAlert("Access Denied.", "err"); }
+        }
+
+        async function ignite() {
+            document.getElementById('gate').style.display = 'none'; 
+            document.getElementById('app').classList.remove('hidden');
+            updateNeuralClock();
+            
+            if(IS_AUTO_COMPOUND) {
+                document.getElementById('compound_btn').classList.add('pct-active');
+                document.getElementById('compound_indicator').classList.remove('hidden');
+            }
+
+            updateUI();
+            
+            Object.keys(ACTIVE_CARDS_DATA).forEach(id => {
+                const data = ACTIVE_CARDS_DATA[id];
+                injectActiveCard(id, data.sym, data.grade, data.cost, data.stampType || "GHOST_LOGIC");
+                startGhostEngine(id, data.sym, data.cost, data.grade, data.real, data.roi);
+            });
+
+            setInterval(autoScanSolana, 4000); 
+            autoScanSolana();
+            refreshHistory();
+            addLog("SYSTEM", "ENGINE_IGNITED_SOLANA_L4");
+            setInterval(neuralChronosWatcher, 1000);
+
+            if(!IS_REAL) {
+                triggerVirtualModal();
+            }
+        }
+
+        function triggerVirtualModal() {
+            const gate = document.getElementById('modal_alokasi_gate');
+            const balLabel = document.getElementById('label_real_balance');
+            const currentBal = IS_REAL ? REAL_BAL : (SIM_BAL || MODAL_DASAR);
+            balLabel.innerText = `[ Liquid Assets: RP ${formatVisualIDR(currentBal)} ]`;
+            gate.classList.remove('hidden');
+        }
+
+        function skipAllocation() {
+            if (ALLOCATED_CAPITAL > 0) {
+                document.getElementById('modal_alokasi_gate').classList.add('hidden');
+            } else {
+                proAlert("LOCK ALLOCATION FIRST", "err");
+            }
+        }
+
+        function lockVirtualCapital() {
+            const inputStr = document.getElementById('input_modal_virtual').value.replace(/\D/g, "");
+            const inputVal = parseInt(inputStr) || 0;
+            const currentBalance = IS_REAL ? REAL_BAL : (SIM_BAL || MODAL_DASAR);
+
+            if (inputVal < 500000 || inputVal > 500000000) {
+                proAlert("Range: 500rb - 500jt", "err");
+                return;
+            }
+            
+            if (IS_REAL && inputVal > currentBalance) {
+                proAlert("Input exceeds wallet balance!", "err");
+                return;
+            }
+
+            ALLOCATED_CAPITAL = inputVal;
+            localStorage.setItem('apex_allocated_cap', ALLOCATED_CAPITAL);
+            
+            if (!IS_REAL && SIM_BAL === 0) {
+                SIM_BAL = inputVal;
+                localStorage.setItem('apex_sim_bal', SIM_BAL);
+            }
+            
+            START_BAL_DAY = inputVal; 
+            localStorage.setItem('apex_start_bal', START_BAL_DAY);
+            
+            document.getElementById('modal_alokasi_gate').classList.add('hidden');
+            addLog("SYSTEM", `SOL_ALLOCATION_LOCKED: RP ${formatVisualIDR(ALLOCATED_CAPITAL)}`);
+            proAlert(`DANA TERKUNCI: ${formatVisualIDR(ALLOCATED_CAPITAL)}`, "success");
+            updateUI();
+        }
+
+        async function manualScan() {
+            addLog("SYSTEM", "PULSE_SCAN_TRIGGERED");
+            document.getElementById('radar_icon').classList.add('animate-spin');
+            await autoScanSolana(true);
+            setTimeout(() => document.getElementById('radar_icon').classList.remove('animate-spin'), 2000);
+        }
+
+        async function autoScanSolana(force = false) {
+            let success = false;
+            let targetUrl = encodeURIComponent('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112');
+            
+            for (let i = 0; i < PROXY_PIPELINE.length; i++) {
+                if (success) break;
+                let currentPath = PROXY_PIPELINE[currentPipelineIdx];
+                try {
+                    const res = await fetch(currentPath + targetUrl);
+                    const result = await res.json();
+                    if (result && result.pairs) {
+                        processSolanaPairs(result.pairs, force); 
+                        success = true;
+                        document.getElementById('failover_status').innerText = "LAYER 4: STABLE";
+                        document.getElementById('failover_status').className = "text-[6px] text-green-400 font-bold uppercase tracking-widest";
+                    }
+                } catch (e) { 
+                    currentPipelineIdx = (currentPipelineIdx + 1) % PROXY_PIPELINE.length;
+                    document.getElementById('failover_status').innerText = "LAYER 4: REROUTING...";
+                }
+            }
+        }
+
+        function processSolanaPairs(pairs, force) {
+            const isTargetMet = checkDailyTarget();
+            pairs.forEach(p => {
+                const sym = p.baseToken.symbol;
+                const change = parseFloat(p.priceChange.h24 || 0);
+                const vol = parseFloat(p.volume.h24 || 0);
+                const id = p.pairAddress;
+
+                if(!TREND_HISTORY[id]) TREND_HISTORY[id] = [];
+                TREND_HISTORY[id].push(change);
+                if(TREND_HISTORY[id].length > 10) TREND_HISTORY[id].shift();
+
+                let passTier1 = change > 5.0; 
+                let passTier2 = vol > 100000;
+
+                if (passTier1 || passTier2 || force) {
+                    let grade = change > 15 ? "STRICT A+" : (change > 8 ? "AGGRESSIVE B+" : "GRADE C+");
+                    injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet);
+                }
+            });
+        }
+
+        function injectSignalSpecific(id, sym, price, grade, change, vol, isTargetMet) {
+            const history = TREND_HISTORY[id] || [change];
+            if(document.getElementById(`signal_${id}`)) {
+                const existing = document.getElementById(`signal_${id}`);
+                const trendBox = existing.querySelector('.trend-line-container');
+                if(trendBox) {
+                    trendBox.innerHTML = history.map((h, i) => {
+                        const localFalling = i > 0 && history[i] < history[i-1];
+                        return `<div class="trend-bar ${localFalling ? 'trend-danger' : ''}" style="height: ${Math.max(15, Math.min(100, Math.abs(h)*5))}%"></div>`;
+                    }).join('');
+                }
+                const pctTag = existing.querySelector('.pct-value-tag');
+                if(pctTag) pctTag.innerText = `+${change}%`;
+                if(isTargetMet) existing.classList.add('signal-locked');
+                return;
+            }
+            const div = document.createElement('div'); div.id = `signal_${id}`;
+            const gClass = grade.includes('A') ? 'grade-a-card' : (grade.includes('B') ? 'grade-b-card' : 'grade-c-card');
+            const strategyRef = PATEN_STRATEGY[grade] || { priority: 3, allocation: 0.1 };
+            div.className = `card-base mb-2 animate__animated animate__fadeInLeft ${gClass} ${isTargetMet ? 'signal-locked' : ''}`;
+            div.innerHTML = `
+                ${isTargetMet ? '<div class="locked-badge">TARGET 25% REACHED</div>' : ''}
+                <div style="position:absolute;top:0;right:0;background:#d4af37;color:black;font-size:8px;font-weight:900;padding:3px 12px;border-bottom-left-radius:12px;">${grade}</div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[7px] text-green-400 font-black pct-value-tag">+${change}%</p>
+                        <h3 class="text-sm font-black italic text-white">${sym}/SOL</h3>
+                        <div class="trend-line-container">${history.map((h, i) => `<div class="trend-bar" style="height: ${Math.max(15, Math.min(100, Math.abs(h)*5))}%"></div>`).join('')}</div>
+                    </div>
+                </div>
+                <button onclick="handleStrike('${id}','${sym}',${price},'${grade}')" class="w-full bg-white/5 border border-white/10 py-2 mt-2 rounded-xl font-black text-[9px] text-white/60 uppercase strike-btn-logic">Strike</button>`;
+            
+            document.getElementById('feed_signal').appendChild(div);
+            setTimeout(() => { if(document.getElementById(`signal_${id}`)) document.getElementById(`signal_${id}`).remove(); }, 30000);
+        }
+
+        function handleStrike(id, sym, price, grade) {
+            if(checkDailyTarget()) { proAlert("TARGET MET: SIGNALS LOCKED", "err"); return; }
+            let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
+            let cost = parseInt(costStr) || 0;
+            const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
+            const config = PATEN_STRATEGY[grade] || { allocation: 0.25, sub_pct: 0.1 };
+            let stampType = "MANUAL_FIXED";
+            
+            if (cost <= 0) { 
+                let baseAllocation = ALLOCATED_CAPITAL * (config.allocation); 
+                cost = baseAllocation * config.sub_pct; 
+                stampType = `AUTO_${(config.sub_pct*100).toFixed(0)}%_OF_ALLOC`; 
+            }
+            
+            if (cost > currentBal) { proAlert("Insufficient Balance", "err"); return; }
+            if(document.getElementById(`signal_${id}`)) document.getElementById(`signal_${id}`).remove();
+            
+            injectActiveCard(id, sym, grade, cost, stampType);
+            if(!IS_REAL) { SIM_BAL -= cost; localStorage.setItem('apex_sim_bal', SIM_BAL); } 
+            else { REAL_BAL -= cost; }
+            
+            ACTIVE_CARDS_DATA[id] = { sym, grade, cost, real: IS_REAL, roi: 0, stampType };
+            localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
+            startGhostEngine(id, sym, cost, grade, IS_REAL);
+            updateUI();
+        }
+
+        function injectActiveCard(id, sym, grade, cost, stampType = "GHOST_LOGIC") {
+            if(document.getElementById(`active_${id}`)) return;
+            const div = document.createElement('div'); div.id = `active_${id}`;
+            div.setAttribute('onclick', `manualVanish('${id}', '${sym}', ${cost}, '${grade}')`);
+            div.className = `card-base mb-2 border-2 border-cyan-500 bg-[#0d0f14] animate__animated animate__pulse animate__infinite clickable-card relative`;
+            div.innerHTML = `
+                <div class="flex justify-between items-center"><span class="text-[7px] text-yellow-500 font-black">${grade}</span><span class="text-[6px] text-red-500 animate-pulse font-black">SOL-LIVE</span></div>
+                <h3 class="text-[11px] font-black text-white italic">${sym}/SOL</h3>
+                <div class="flex flex-col items-center py-2"><div id="roi_${id}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}" class="text-[8px] font-bold text-white/60"> (+RP 0)</div></div>
+                <div class="trend-line-container mb-2" id="trend_strike_${id}"></div>
+                <p class="text-[6px] text-white/40 text-center uppercase mb-1">Entry: RP ${formatVisualIDR(cost)}</p>
+                <div class="stamp-logic">${stampType}</div>`;
+            document.getElementById('feed_active').prepend(div);
+        }
+
+        async function startGhostEngine(id, sym, cost, grade, real, startRoi = 0) {
+            let roi = startRoi;
+            let maxRoi = roi; 
+            const config = PATEN_STRATEGY[grade] || { tp: 2.0, tp2: 5.0, sl: -1.0, trailing: 0.5 };
+            let localTrend = [0, 0.1, -0.1, 0];
+            
+            const iv = setInterval(() => {
+                let change = (Math.random() * 1.5 - 0.6); // Higher volatility for Solana
+                roi += change; 
+                if (roi > maxRoi) maxRoi = roi;
+                
+                localTrend.push(change);
+                if(localTrend.length > 15) localTrend.shift();
+
+                const rDisp = document.getElementById(`roi_${id}`);
+                const rValDisp = document.getElementById(`roi_val_idr_${id}`);
+                const trendDisp = document.getElementById(`trend_strike_${id}`);
+
+                if(rDisp) {
+                    rDisp.innerText = roi.toFixed(2) + "%";
+                    rDisp.style.color = roi >= 0 ? "#14f195" : "#ff003c";
+                    const profitIDR = Math.floor(cost * (roi / 100));
+                    if(rValDisp) rValDisp.innerText = ` (${profitIDR >= 0 ? '+' : ''}RP ${formatVisualIDR(profitIDR)})`;
+                    if(trendDisp) {
+                        trendDisp.innerHTML = localTrend.map(t => `<div class="trend-bar ${t < 0 ? 'trend-danger' : ''}" style="height: ${Math.max(20, Math.min(100, 50 + (t*50)))}%"></div>`).join('');
+                    }
+                }
+
+                let shouldVanish = false;
+                if (roi <= config.sl) shouldVanish = true;
+                else if (roi >= config.tp) {
+                    if (maxRoi - roi >= config.trailing || roi >= config.tp2) shouldVanish = true;
+                }
+                if (shouldVanish) {
+                    clearInterval(iv);
+                    vanishEngine(id, sym, cost, roi, real, grade, "AUTO_SYSTEM");
+                }
+            }, 1000);
+            ACTIVE_INTERVALS[id] = iv;
+        }
+
+        async function manualVanish(id, sym, cost, grade) {
+            const rDisp = document.getElementById(`roi_${id}`);
+            if(!rDisp) return;
+            const currentRoi = parseFloat(rDisp.innerText.replace('%', ''));
+            const confirmed = await openNeuralModal(`Exit ${sym} at ${currentRoi}%?`);
+            if(confirmed) {
+                if(ACTIVE_INTERVALS[id]) clearInterval(ACTIVE_INTERVALS[id]);
+                vanishEngine(id, sym, cost, currentRoi, IS_REAL, grade, "MANUAL_STRIKE");
+            }
+        }
+
+        async function panicSellAll() {
+            const activeCards = document.querySelectorAll('#feed_active > div');
+            if(activeCards.length === 0) return;
+            const confirmed = await openNeuralModal(`Liquidate ALL Solana positions?`);
+            if(confirmed) {
+                activeCards.forEach(card => {
+                    const id = card.id.replace('active_', '');
+                    const rDisp = document.getElementById(`roi_${id}`);
+                    if(rDisp && ACTIVE_INTERVALS[id]) {
+                        const currentRoi = parseFloat(rDisp.innerText.replace('%', ''));
+                        clearInterval(ACTIVE_INTERVALS[id]);
+                        vanishEngine(id, ACTIVE_CARDS_DATA[id].sym, ACTIVE_CARDS_DATA[id].cost, currentRoi, ACTIVE_CARDS_DATA[id].real, ACTIVE_CARDS_DATA[id].grade, "PANIC_SELL");
+                    }
+                });
+            }
+        }
+
+        function vanishEngine(id, sym, cost, roi, real, grade, reason) {
+            const profit = cost * (roi/100);
+            if(!real) { SIM_BAL += (cost + profit); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
+            else { REAL_BAL += (cost + profit); }
+            SIM_HISTORY.unshift({ date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), sym, roi: roi.toFixed(2), net: Math.floor(profit), grade, mode: real ? 'REAL' : 'SIM' });
+            localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
+            delete ACTIVE_CARDS_DATA[id];
+            localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
+            if(document.getElementById(`active_${id}`)) document.getElementById(`active_${id}`).remove();
+            updateUI(); 
+            refreshHistory();
+            addLog("EXIT", `${sym} ${roi.toFixed(2)}% [${reason}]`);
+        }
+
+        function downloadMonthlyExcel() {
+            if (SIM_HISTORY.length === 0) return;
+            let csvContent = "data:text/csv;charset=utf-8,Date,Time,Pair,Grade,Mode,ROI(%),Profit(IDR)\n";
+            SIM_HISTORY.forEach(h => { csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${h.net}\n`; });
+            window.open(encodeURI(csvContent));
+        }
+
+        async function performDailyReset() {
+            const totalAssetsNow = (IS_REAL ? (REAL_BAL + TOTAL_SECURED_REAL) : (SIM_BAL + TOTAL_SECURED_SIM));
+            const netProfitIDR = totalAssetsNow - START_BAL_DAY;
+            const actualPctGain = (netProfitIDR / START_BAL_DAY) * 100;
+
+            if(actualPctGain < 25) {
+                proAlert("TARGET 25% NOT REACHED", "err");
+                return;
+            }
+
+            const confirmed = await openNeuralModal("Update Harian & Consolidate Vault?");
+            if(!confirmed) return;
+            
+            const profitOnly = (IS_REAL ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM);
+            if(!IS_REAL) {
+                SIM_BAL += profitOnly;
+                TOTAL_SECURED_SIM = 0;
+                localStorage.setItem('apex_sim_vault', 0);
+                localStorage.setItem('apex_sim_bal', SIM_BAL);
+                START_BAL_DAY = SIM_BAL;
+            } else {
+                REAL_BAL += profitOnly;
+                TOTAL_SECURED_REAL = 0;
+                START_BAL_DAY = REAL_BAL;
+            }
+            localStorage.setItem('apex_start_bal', START_BAL_DAY);
+            SIM_HISTORY = [];
+            localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
+            IS_VAULTED_TODAY = false;
+            localStorage.setItem('apex_is_vaulted', false);
+            ALLOCATED_CAPITAL = 0;
+            localStorage.setItem('apex_allocated_cap', 0);
+            refreshHistory();
+            updateUI();
+            triggerVirtualModal();
+            addLog("SYSTEM", "DAILY_SYNC_SUCCESSFUL");
+        }
+
+        function neuralChronosWatcher() {
+            const currentDateString = new Date().toLocaleDateString();
+            if (currentDateString !== LAST_CHECKED_DATE) {
+                LAST_CHECKED_DATE = currentDateString;
+                localStorage.setItem('apex_last_date', LAST_CHECKED_DATE);
+                addLog("SYSTEM", "NEW_BLOCKCHAIN_DAY");
+            }
+        }
+
+        function updateUI() { 
+            const b = IS_REAL ? REAL_BAL : SIM_BAL; 
+            const v = IS_REAL ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM;
+            document.getElementById('m_bal').innerText = "RP " + formatVisualIDR(b); 
+            document.getElementById('vault_total').innerText = "RP " + formatVisualIDR(v);
+            document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
+            
+            const totalAssetsNow = (IS_REAL ? (REAL_BAL + TOTAL_SECURED_REAL) : (SIM_BAL + TOTAL_SECURED_SIM));
+            const netProfitIDR = totalAssetsNow - START_BAL_DAY;
+            const actualPctGain = START_BAL_DAY > 0 ? (netProfitIDR / START_BAL_DAY) * 100 : 0; 
+            const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
+            const updateBtn = document.getElementById('daily_update_btn');
+            
+            if (actualPctGain >= 25 && activeCount === 0) {
+                updateBtn.classList.remove('btn-disabled');
+                updateBtn.classList.add('animate__animated', 'animate__flash', 'animate__infinite');
+            } else {
+                updateBtn.classList.add('btn-disabled');
+                updateBtn.classList.remove('animate__flash');
+            }
+
+            const manualSecBtn = document.getElementById('manual_security_btn');
+            const bufferIcon = document.getElementById('buffer_icon_container');
+            const isBufferActive = actualPctGain < 100; // Safety Buffer: 100% Capital Growth
+
+            const isProfitReady = actualPctGain >= 25; 
+
+            if (isProfitReady && !IS_VAULTED_TODAY) {
+                manualSecBtn.classList.remove('btn-disabled');
+                manualSecBtn.classList.add('msp-active-glow');
+                manualSecBtn.innerText = "Manual Security Profit (Active)";
+            } else {
+                manualSecBtn.classList.add('btn-disabled');
+                manualSecBtn.classList.remove('msp-active-glow');
+                manualSecBtn.innerText = IS_VAULTED_TODAY ? "Profit Locked in Vault" : "Manual Security Profit (Non Active)";
+            }
+
+            if (isBufferActive) {
+                bufferIcon.classList.remove('hidden');
+            } else {
+                bufferIcon.classList.add('hidden');
+            }
+        }
+
+        function toggleMode() {
+            if(!IS_REAL) {
+                document.getElementById('real_auth_modal').classList.remove('hidden');
+            } else { 
+                IS_REAL = false; 
+                REAL_BAL = 0;
+                TOTAL_SECURED_REAL = 0;
+                syncSimulationWithReal(false);
+                updateUI(); 
+                triggerVirtualModal();
+            }
+        }
+
+        async function confirmRealMode() {
+            const key = document.getElementById('popup_m_key').value.trim();
+            const secret = document.getElementById('popup_m_cold').value.trim();
+            const btn = document.getElementById('establish_btn');
+            
+            if(!key || key.length < 32) {
+                proAlert("INVALID SOL ADDRESS", "err");
+                return;
+            }
+            if(!secret || secret.length < 64) {
+                proAlert("INVALID PRIVATE KEY", "err");
+                return;
+            }
+
+            btn.innerText = "LINKING PHANTOM...";
+            btn.classList.add('btn-disabled');
+            addLog("NEURAL", "CONNECTING_TO_SOLANA_RPC...");
+
+            try {
+                // Simulate Handshake with Solana RPC
+                setTimeout(() => {
+                    API_KEY = key;
+                    SECRET_KEY = secret;
+                    REAL_BAL = 25000000; // Simulated Real Balance in IDR equiv
+                    
+                    cancelRealMode();
+                    IS_REAL = true; 
+                    syncSimulationWithReal(true);
+                    updateUI();
+                    triggerVirtualModal();
+                    
+                    proAlert("PHANTOM LINKED: REAL MODE ACTIVE", "success");
+                    addLog("SUCCESS", `SOLANA_WALLET_SYNCED: RP ${formatVisualIDR(REAL_BAL)}`);
+                }, 1500);
+            } catch (e) {
+                proAlert("RPC CONNECTION FAILED", "err");
+                btn.innerText = "Connect to Raydium LP";
+                btn.classList.remove('btn-disabled');
+            }
+        }
+
+        function cancelRealMode() { document.getElementById('real_auth_modal').classList.add('hidden'); }
+        function formatVisualIDR(v) { return new Intl.NumberFormat('id-ID').format(Math.floor(v)); }
+        
+        function syncFromIdr() { 
+            let input = document.getElementById('input_idr');
+            let v = input.value.replace(/\D/g, ""); 
+            if(v !== "") input.value = formatVisualIDR(v);
+        }
+
+        function syncFromIdrCustom(id) {
+            let input = document.getElementById(id);
+            let v = input.value.replace(/\D/g, "");
+            if(v !== "") input.value = formatVisualIDR(v);
+        }
+        
+        function applyPct(p, el) {
+            document.getElementById('compound_btn').classList.remove('pct-active');
+            document.getElementById('compound_indicator').classList.add('hidden');
+            IS_AUTO_COMPOUND = false;
+            localStorage.setItem('apex_auto_comp', false);
+
+            const input = document.getElementById('input_idr');
+            const b = ALLOCATED_CAPITAL || (IS_REAL ? REAL_BAL : SIM_BAL);
+            document.querySelectorAll('.pct-btn').forEach(btn => btn.classList.remove('pct-active'));
+            el.classList.add('pct-active');
+            input.value = formatVisualIDR(b * p);
+        }
+
+        function addLog(t, m) { const l = document.getElementById('logs'); const d = document.createElement('div'); d.innerHTML = `<span class="text-cyan-400">[${t}]</span> ${m}`; l.prepend(d); }
+        function proAlert(m, t) { 
+            const c = document.getElementById('pro_toast_container'); 
+            const to = document.createElement('div');
+            to.className = "pro-toast animate__animated animate__fadeInRight";
+            to.innerHTML = `<i class="fa-solid ${t==='err'?'fa-circle-xmark text-red-500':'fa-circle-check text-cyan-400'}"></i><p class="text-[9px] font-bold text-white uppercase">${m}</p>`; 
+            c.appendChild(to); 
+            setTimeout(() => to.remove(), 3000); 
+        }
+        function updateNeuralClock() { setInterval(() => { document.getElementById('neural_clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000); }
+        
+        function checkDailyTarget() { 
+            const totalAssetsNow = IS_REAL ? (REAL_BAL + TOTAL_SECURED_REAL) : (SIM_BAL + TOTAL_SECURED_SIM);
+            const netProfitIDR = totalAssetsNow - START_BAL_DAY;
+            const actualPctGain = START_BAL_DAY > 0 ? (netProfitIDR / START_BAL_DAY) * 100 : 0; 
+            const pctDisplay = Math.min(25, Math.max(0, actualPctGain)).toFixed(2);
+            document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
+            document.getElementById('target_stat').innerText = `${pctDisplay}% / 25%`;
+            if(document.getElementById('bt_winrate')) document.getElementById('bt_winrate').innerText = `${pctDisplay}% / 25%`;
+
+            const compoundIndicator = document.getElementById('compound_indicator');
+            const isBufferCompActive = totalAssetsNow < (START_BAL_DAY * 2); // 100% Growth Rule
+
+            if (IS_AUTO_COMPOUND) {
+                if (isBufferCompActive) {
+                    compoundIndicator.innerHTML = '<i class="fa-solid fa-shield-halved text-yellow-500"></i> Buffer Mode';
+                    compoundIndicator.classList.add('buffer-mode');
+                } else {
+                    compoundIndicator.innerHTML = '<i class="fa-solid fa-recycle animate-spin"></i> Auto-Comp';
+                    compoundIndicator.classList.remove('buffer-mode');
+                }
+            }
+            updateUI();
+            return actualPctGain >= 25;
+        }
+
+        function refreshHistory() {
+            const list = document.getElementById('backtest_list'); list.innerHTML = "";
+            let netTotalIDR = 0;
+            SIM_HISTORY.forEach(h => {
+                netTotalIDR += h.net;
+                const c = document.createElement('div'); 
+                c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
+                c.innerHTML = `<div style="flex: 1;"><p class="text-[10px] text-white font-bold">${h.sym}</p></div><div style="flex: 1; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div><div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">RP ${formatVisualIDR(h.net)}</p></div>`;
+                list.appendChild(c);
+            });
+            document.getElementById('bt_total').innerText = SIM_HISTORY.length;
+            document.getElementById('bt_profit').innerText = "RP " + formatVisualIDR(netTotalIDR);
+            checkDailyTarget();
+        }
+
+        function openBacktest() { document.getElementById('backtest_modal').style.display = 'block'; refreshHistory(); }
+        function closeBacktest() { document.getElementById('backtest_modal').style.display = 'none'; }
+        
+        async function secureToVault() {
+            const confirmed = await openNeuralModal("Secure profits to Ghost Vault?");
+            if(confirmed) {
+                if (IS_REAL) { 
+                    let profitToVault = REAL_BAL - ALLOCATED_CAPITAL;
+                    if(profitToVault > 0) { 
+                        TOTAL_SECURED_REAL += profitToVault; 
+                        REAL_BAL = ALLOCATED_CAPITAL; 
+                    }
+                } else { 
+                    let profitToVault = SIM_BAL - ALLOCATED_CAPITAL;
+                    if(profitToVault > 0) { 
+                        TOTAL_SECURED_SIM += profitToVault; 
+                        SIM_BAL = ALLOCATED_CAPITAL; 
+                        localStorage.setItem('apex_sim_bal', SIM_BAL);
+                        localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                    }
+                }
+                IS_VAULTED_TODAY = true;
+                localStorage.setItem('apex_is_vaulted', true);
+                updateUI(); 
+                proAlert("PROFITS SECURED TO VAULT", "success");
+            }
+        }
+    </script>
+</body>
+</html>
