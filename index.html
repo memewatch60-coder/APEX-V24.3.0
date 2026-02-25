@@ -97,6 +97,10 @@
         .ledger-stamp { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
         .stamp-sim { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); }
         .stamp-real { background: rgba(20, 241, 149, 0.2); color: #14f195; border: 1px solid rgba(20, 241, 149, 0.5); }
+
+        /* Progress Bar Master */
+        .progress-container-master { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .progress-fill-buffer { height: 100%; background: linear-gradient(90deg, #f59e0b, #d4af37); box-shadow: 0 0 10px #f59e0b; transition: width 0.5s ease-in-out; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -222,6 +226,7 @@
                                 <i class="fa-solid fa-shield-virus buffer-blink-icon"></i>
                                 <span id="buffer_blink_text" class="blink-text-red-gold">BUFFER ACTIVE (100% CAP)</span>
                             </div>
+                            <div class="progress-container-master"><div id="buffer_master_fill" class="progress-fill-buffer" style="width: 0%"></div></div>
                             <div id="buffer_countdown">Siklus: 00:00:00</div>
                         </div>
                         <p id="mode_tag" class="status-tag text-purple-400 bg-purple-500/10 border-purple-500/30">SIMULATION</p>
@@ -654,7 +659,7 @@
             const strategyRef = PATEN_STRATEGY[grade] || { priority: 3, allocation: 0.1 };
             div.className = `card-base mb-2 animate__animated animate__fadeInLeft ${gClass} ${isTargetMet ? 'signal-locked' : ''}`;
             div.innerHTML = `
-                ${isTargetMet ? '<div class="locked-badge">TARGET 25% REACHED</div>' : ''}
+                ${isTargetMet ? '<div class="locked-badge">TARGET REACHED</div>' : ''}
                 <div style="position:absolute;top:0;right:0;background:#d4af37;color:black;font-size:8px;font-weight:900;padding:3px 12px;border-bottom-left-radius:12px;">${grade}</div>
                 <div class="flex justify-between items-start">
                     <div>
@@ -785,7 +790,6 @@
             if(!real) { SIM_BAL += (cost + profit); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL += (cost + profit); }
             
-            // Logic Additions: Sim vs Real Mode Stamp for Ledger
             const historyEntry = { 
                 date: new Date().toLocaleDateString(), 
                 time: new Date().toLocaleTimeString(), 
@@ -813,16 +817,13 @@
             
             const currentModeFilter = IS_REAL ? 'REAL' : 'SIM';
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "DATE,TIME,PAIR,GRADE,MODE,ROI(%),PROFIT(SOL),VAULT_BALANCE(SOL),MAIN_BALANCE(SOL),TARGET_STATUS\n";
+            csvContent += "DATE,TIME,PAIR,GRADE,MODE,ROI(%),PROFIT(SOL),VAULT_BALANCE(SOL),MAIN_BALANCE(SOL)\n";
             
             SIM_HISTORY.forEach(h => { 
-                // Detailed export including Master's requested data
                 const solProfit = (h.net/KURS_SOL_IDR).toFixed(6);
                 const solVault = (h.vaultAtTime/KURS_SOL_IDR).toFixed(4);
                 const solMain = (h.mainAtTime/KURS_SOL_IDR).toFixed(4);
-                const targetAchieved = parseFloat(h.roi) >= 25 ? "ACHIEVED" : "PROGRESS";
-                
-                csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${solProfit},${solVault},${solMain},${targetAchieved}\n`; 
+                csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${solProfit},${solVault},${solMain}\n`; 
             });
             
             const encodedUri = encodeURI(csvContent);
@@ -836,10 +837,10 @@
 
         async function performDailyReset() {
             const totalAssetsNow = (IS_REAL ? REAL_BAL : SIM_BAL);
-            const netProfitIDR = totalAssetsNow - ALLOCATED_CAPITAL;
-            const actualPctGain = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
+            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            const netProfitIDR = totalAssetsNow - refBase;
+            const actualPctGain = (netProfitIDR / refBase) * 100;
 
-            // Logic Addition: Block Withdraw if Buffer Active
             if(BUFFER_ACTIVE_STATUS) {
                 proAlert("WITHDRAW LOCKED: BUFFER ACTIVE", "err");
                 return;
@@ -866,11 +867,9 @@
                 }
             }
 
-            // Sync Start Balance for tomorrow
             START_BAL_DAY = ALLOCATED_CAPITAL; 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
             
-            // Clear current mode history only
             const modeToKeep = IS_REAL ? 'SIM' : 'REAL';
             SIM_HISTORY = SIM_HISTORY.filter(h => h.mode === modeToKeep);
             localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
@@ -890,10 +889,16 @@
             if (currentDateString !== LAST_CHECKED_DATE) {
                 LAST_CHECKED_DATE = currentDateString;
                 localStorage.setItem('apex_last_date', LAST_CHECKED_DATE);
+                
+                // On New Day, reset START_BAL_DAY to current balance if Buffer is NOT Active
+                if (!BUFFER_ACTIVE_STATUS) {
+                    START_BAL_DAY = IS_REAL ? REAL_BAL : SIM_BAL;
+                    localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                }
+                
                 addLog("SYSTEM", "NEW_BLOCKCHAIN_DAY");
             }
 
-            // Logic Addition: Auto-Reset Buffer 30 Days
             if (now >= LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) {
                 BUFFER_ACTIVE_STATUS = true;
                 MSP_USED_IN_CYCLE = false;
@@ -904,7 +909,6 @@
                 addLog("SYSTEM", "MONTHLY_BUFFER_REACTIVATED");
             }
 
-            // Update Countdown Timer Visual
             if (BUFFER_ACTIVE_STATUS) {
                 const timeLeft = (LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) - now;
                 const days = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
@@ -923,34 +927,36 @@
             
             document.getElementById('m_bal').innerText = (b/KURS_SOL_IDR).toFixed(4) + " SOL"; 
             document.getElementById('m_bal_idr').innerText = "RP " + formatVisualIDR(b);
-            
             document.getElementById('vault_total').innerText = (v/KURS_SOL_IDR).toFixed(4) + " SOL";
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
-            
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
-            // RE-CALCULATE PROGRESS BASED ON CURRENT MODE DATA ONLY
-            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
-            const modeHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
-            let totalGainInMode = 0;
-            modeHistory.forEach(h => totalGainInMode += parseFloat(h.roi));
-
-            // Target Gain is now functional based on actual transactions
-            const actualPctGain = totalGainInMode; 
+            // LOGIC ADDITION: Dynamic Target Calculation
+            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            const netProfitIDR = b - refBase;
+            const actualPctGain = (netProfitIDR / refBase) * 100;
             const pctDisplay = Math.min(100, Math.max(0, actualPctGain)).toFixed(2);
+            
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25%`;
 
-            // Logic Addition: Buffer State Checking
-            if (actualPctGain >= 100) {
-                BUFFER_ACTIVE_STATUS = false;
-                localStorage.setItem('apex_buffer_active', false);
+            // BUFFER MASTER PROGRESS (Toward 100%)
+            const bufferRefBase = ALLOCATED_CAPITAL;
+            const bufferNetProfit = b - bufferRefBase;
+            const bufferPct = (bufferNetProfit / bufferRefBase) * 100;
+            document.getElementById('buffer_master_fill').style.width = Math.min(100, Math.max(0, bufferPct)) + "%";
+
+            if (bufferPct >= 100) {
+                if (BUFFER_ACTIVE_STATUS) {
+                    BUFFER_ACTIVE_STATUS = false;
+                    localStorage.setItem('apex_buffer_active', false);
+                    addLog("SYSTEM", "BUFFER_CAPACITY_REACHED: UNLOCKED");
+                }
             }
 
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
-            // Logic Addition: Withdraw only active if Buffer is NOT Active and Target reached
             if (!BUFFER_ACTIVE_STATUS && actualPctGain >= 25 && activeCount === 0) {
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('animate__animated', 'animate__flash', 'animate__infinite');
@@ -961,7 +967,6 @@
 
             const manualSecBtn = document.getElementById('manual_security_btn');
             const bufferIcon = document.getElementById('buffer_icon_container');
-            const isBufferCompActive = BUFFER_ACTIVE_STATUS; 
 
             if (!BUFFER_ACTIVE_STATUS && !MSP_USED_IN_CYCLE && actualPctGain > 0) {
                 manualSecBtn.classList.remove('btn-disabled');
@@ -973,7 +978,7 @@
                 manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Harvest Completed" : "Manual Security Profit (Non Active)";
             }
 
-            if (isBufferCompActive) {
+            if (BUFFER_ACTIVE_STATUS) {
                 bufferIcon.classList.remove('hidden');
             } else {
                 bufferIcon.classList.add('hidden');
@@ -995,23 +1000,16 @@
             const key = document.getElementById('popup_m_key').value.trim();
             const secret = document.getElementById('popup_m_cold').value.trim();
             const btn = document.getElementById('establish_btn');
-            
             if(!key || key.length < 32) { proAlert("INVALID VAULT ADDRESS", "err"); return; }
             if(!secret || secret.length < 64) { proAlert("INVALID TRADE PRIVATE KEY", "err"); return; }
-
             btn.innerText = "LINKING PHANTOM...";
             btn.classList.add('btn-disabled');
-            addLog("NEURAL", "SYNCING_REAL_BLOCKCHAIN...");
-
             try {
-                API_KEY = key; 
-                SECRET_KEY = secret; 
-                
+                API_KEY = key; SECRET_KEY = secret; 
                 const conn = await getSolanaConnection();
                 const pubKey = new solanaWeb3.PublicKey(key);
                 const lamports = await conn.getBalance(pubKey);
                 REAL_BAL = (lamports / solanaWeb3.LAMPORTS_PER_SOL) * KURS_SOL_IDR;
-
                 cancelRealMode();
                 IS_REAL = true; 
                 syncSimulationWithReal(true);
@@ -1050,7 +1048,6 @@
             document.getElementById('compound_indicator').classList.add('hidden');
             IS_AUTO_COMPOUND = false;
             localStorage.setItem('apex_auto_comp', false);
-
             const input = document.getElementById('input_idr');
             const b = ALLOCATED_CAPITAL || (IS_REAL ? REAL_BAL : SIM_BAL);
             document.querySelectorAll('.pct-btn').forEach(btn => btn.classList.remove('pct-active'));
@@ -1071,17 +1068,14 @@
         function updateNeuralClock() { setInterval(() => { document.getElementById('neural_clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000); }
         
         function checkDailyTarget() { 
-            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
-            const modeHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
-            let totalGainInMode = 0;
-            modeHistory.forEach(h => totalGainInMode += parseFloat(h.roi));
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            const netProfitIDR = b - refBase;
+            const actualPctGain = (netProfitIDR / refBase) * 100;
 
-            const actualPctGain = totalGainInMode; 
             const compoundIndicator = document.getElementById('compound_indicator');
-            const isBufferCompActive = BUFFER_ACTIVE_STATUS; 
-
             if (IS_AUTO_COMPOUND) {
-                if (isBufferCompActive) {
+                if (BUFFER_ACTIVE_STATUS) {
                     compoundIndicator.innerHTML = '<i class="fa-solid fa-shield-halved text-yellow-500"></i> Buffer Mode';
                     compoundIndicator.classList.add('buffer-mode');
                 } else {
@@ -1095,20 +1089,14 @@
         function refreshHistory() {
             const list = document.getElementById('backtest_list'); list.innerHTML = "";
             let netTotalIDR = 0;
-            let totalGainInMode = 0;
-            
-            // LOGIC FIX: Filter ledger history by current active mode
             const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
             const filteredHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
             
             filteredHistory.forEach(h => {
                 netTotalIDR += h.net;
-                totalGainInMode += parseFloat(h.roi);
-                
                 const c = document.createElement('div'); 
                 const stampClass = h.mode === 'REAL' ? 'stamp-real' : 'stamp-sim';
                 const stampLabel = h.mode === 'REAL' ? 'REAL' : 'SIMULASI';
-
                 c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
                 c.innerHTML = `
                     <div style="flex: 1.2;">
@@ -1116,65 +1104,31 @@
                         <p class="text-[10px] text-white font-bold inline">${h.sym}/SOL</p>
                         <p class="text-[6px] text-white/40 uppercase mt-1">${h.date} ${h.time}</p>
                     </div>
-                    <div style="flex: 0.8; text-align: center;">
-                        <p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p>
-                    </div>
-                    <div style="flex: 1; text-align: right;">
-                        <p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(4)} SOL</p>
-                    </div>`;
+                    <div style="flex: 0.8; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div>
+                    <div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(4)} SOL</p></div>`;
                 list.appendChild(c);
             });
-            
             document.getElementById('bt_total').innerText = filteredHistory.length;
             document.getElementById('bt_profit').innerText = (netTotalIDR/KURS_SOL_IDR).toFixed(4) + " SOL";
-            
-            // Logic Fix: Update Target Gain Display in Ledger
-            document.getElementById('bt_winrate').innerText = `${totalGainInMode.toFixed(2)}% / 25%`;
-            document.getElementById('bt_mode_display').innerText = IS_REAL ? "REAL SOLANA MAINNET" : "SIMULATED ENVIRONMENT";
-            
-            updateUI(); // Ensure main UI syncs with ledger logic
+            updateUI(); 
         }
 
         function openBacktest() { document.getElementById('backtest_modal').style.display = 'block'; refreshHistory(); }
         function closeBacktest() { document.getElementById('backtest_modal').style.display = 'none'; }
         
         async function secureToVault() {
-            if(BUFFER_ACTIVE_STATUS) {
-                proAlert("BUFFER ACTIVE: MSP LOCKED", "err");
-                return;
-            }
-            if(MSP_USED_IN_CYCLE) {
-                proAlert("MSP ALREADY USED THIS CYCLE", "err");
-                return;
-            }
-
-            const totalAssetsNow = (IS_REAL ? REAL_BAL : SIM_BAL);
-            const profitIDR = totalAssetsNow - ALLOCATED_CAPITAL;
+            if(BUFFER_ACTIVE_STATUS) { proAlert("BUFFER ACTIVE: MSP LOCKED", "err"); return; }
+            if(MSP_USED_IN_CYCLE) { proAlert("MSP ALREADY USED THIS CYCLE", "err"); return; }
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const profitIDR = b - ALLOCATED_CAPITAL;
             const withdrawAmt = profitIDR * 0.5;
-
-            if(withdrawAmt <= 0) {
-                proAlert("NO PROFIT TO HARVEST", "err");
-                return;
-            }
-
+            if(withdrawAmt <= 0) { proAlert("NO PROFIT TO HARVEST", "err"); return; }
             const confirmed = await openNeuralModal(`Harvest 50% Profit (${(withdrawAmt/KURS_SOL_IDR).toFixed(4)} SOL)?`);
             if(confirmed) {
-                if (IS_REAL) { 
-                    TOTAL_SECURED_REAL += withdrawAmt; 
-                    REAL_BAL -= withdrawAmt; 
-                } else { 
-                    TOTAL_SECURED_SIM += withdrawAmt; 
-                    SIM_BAL -= withdrawAmt; 
-                    localStorage.setItem('apex_sim_bal', SIM_BAL);
-                    localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
-                }
-                
-                MSP_USED_IN_CYCLE = true;
-                localStorage.setItem('apex_msp_used', true);
-                
-                const today = new Date().toLocaleDateString();
-                addLog("HARVEST", `Siklus Panen [${today}]`);
-                proAlert(`HARVEST SUCCESS: 50% PROFIT SECURED`, "success");
+                if (IS_REAL) { TOTAL_SECURED_REAL += withdrawAmt; REAL_BAL -= withdrawAmt; } 
+                else { TOTAL_SECURED_SIM += withdrawAmt; SIM_BAL -= withdrawAmt; localStorage.setItem('apex_sim_bal', SIM_BAL); localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); }
+                MSP_USED_IN_CYCLE = true; localStorage.setItem('apex_msp_used', true);
+                addLog("HARVEST", `Siklus Panen Sukses`);
                 updateUI(); 
             }
         }
