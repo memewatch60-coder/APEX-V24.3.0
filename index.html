@@ -92,6 +92,11 @@
 
         /* Logic Additions Styling */
         #buffer_countdown { font-family: 'JetBrains Mono', monospace; font-size: 6px; color: #f59e0b; margin-top: 2px; }
+
+        /* Additional Logic Styling For Ledger */
+        .ledger-stamp { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
+        .stamp-sim { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); }
+        .stamp-real { background: rgba(20, 241, 149, 0.2); color: #14f195; border: 1px solid rgba(20, 241, 149, 0.5); }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -779,7 +784,21 @@
             const profit = cost * (roi/100);
             if(!real) { SIM_BAL += (cost + profit); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL += (cost + profit); }
-            SIM_HISTORY.unshift({ date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), sym, roi: roi.toFixed(2), net: profit, grade, mode: real ? 'REAL' : 'SIM' });
+            
+            // Logic Additions: Sim vs Real Mode Stamp for Ledger
+            const historyEntry = { 
+                date: new Date().toLocaleDateString(), 
+                time: new Date().toLocaleTimeString(), 
+                sym, 
+                roi: roi.toFixed(2), 
+                net: profit, 
+                grade, 
+                mode: real ? 'REAL' : 'SIM',
+                vaultAtTime: (real ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM),
+                mainAtTime: (real ? REAL_BAL : SIM_BAL)
+            };
+            
+            SIM_HISTORY.unshift(historyEntry);
             localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
             delete ACTIVE_CARDS_DATA[id];
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
@@ -790,10 +809,29 @@
         }
 
         function downloadMonthlyExcel() {
-            if (SIM_HISTORY.length === 0) return;
-            let csvContent = "data:text/csv;charset=utf-8,Date,Time,Pair,Grade,Mode,ROI(%),Profit(SOL)\n";
-            SIM_HISTORY.forEach(h => { csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${(h.net/KURS_SOL_IDR).toFixed(6)}\n`; });
-            window.open(encodeURI(csvContent));
+            if (SIM_HISTORY.length === 0) { proAlert("NO DATA TO EXPORT", "err"); return; }
+            
+            const currentModeFilter = IS_REAL ? 'REAL' : 'SIM';
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "DATE,TIME,PAIR,GRADE,MODE,ROI(%),PROFIT(SOL),VAULT_BALANCE(SOL),MAIN_BALANCE(SOL),TARGET_STATUS\n";
+            
+            SIM_HISTORY.forEach(h => { 
+                // Detailed export including Master's requested data
+                const solProfit = (h.net/KURS_SOL_IDR).toFixed(6);
+                const solVault = (h.vaultAtTime/KURS_SOL_IDR).toFixed(4);
+                const solMain = (h.mainAtTime/KURS_SOL_IDR).toFixed(4);
+                const targetAchieved = parseFloat(h.roi) >= 25 ? "ACHIEVED" : "PROGRESS";
+                
+                csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${solProfit},${solVault},${solMain},${targetAchieved}\n`; 
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `APEX_LEDGER_${currentModeFilter}_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         async function performDailyReset() {
@@ -832,8 +870,11 @@
             START_BAL_DAY = ALLOCATED_CAPITAL; 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
             
-            SIM_HISTORY = [];
+            // Clear current mode history only
+            const modeToKeep = IS_REAL ? 'SIM' : 'REAL';
+            SIM_HISTORY = SIM_HISTORY.filter(h => h.mode === modeToKeep);
             localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
+            
             IS_VAULTED_TODAY = false;
             localStorage.setItem('apex_is_vaulted', false);
             
@@ -888,10 +929,15 @@
             
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
-            const totalAssetsNow = (IS_REAL ? REAL_BAL : SIM_BAL);
-            const netProfitIDR = totalAssetsNow - ALLOCATED_CAPITAL;
-            const actualPctGain = ALLOCATED_CAPITAL > 0 ? (netProfitIDR / ALLOCATED_CAPITAL) * 100 : 0; 
-            const pctDisplay = Math.min(25, Math.max(0, actualPctGain)).toFixed(2);
+            // RE-CALCULATE PROGRESS BASED ON CURRENT MODE DATA ONLY
+            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
+            const modeHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
+            let totalGainInMode = 0;
+            modeHistory.forEach(h => totalGainInMode += parseFloat(h.roi));
+
+            // Target Gain is now functional based on actual transactions
+            const actualPctGain = totalGainInMode; 
+            const pctDisplay = Math.min(100, Math.max(0, actualPctGain)).toFixed(2);
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25%`;
 
@@ -904,7 +950,7 @@
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
-            // Logic Addition: Withdraw only active if Buffer is NOT Active
+            // Logic Addition: Withdraw only active if Buffer is NOT Active and Target reached
             if (!BUFFER_ACTIVE_STATUS && actualPctGain >= 25 && activeCount === 0) {
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('animate__animated', 'animate__flash', 'animate__infinite');
@@ -1025,9 +1071,12 @@
         function updateNeuralClock() { setInterval(() => { document.getElementById('neural_clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000); }
         
         function checkDailyTarget() { 
-            const totalAssetsNow = IS_REAL ? REAL_BAL : SIM_BAL;
-            const netProfitIDR = totalAssetsNow - ALLOCATED_CAPITAL;
-            const actualPctGain = ALLOCATED_CAPITAL > 0 ? (netProfitIDR / ALLOCATED_CAPITAL) * 100 : 0; 
+            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
+            const modeHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
+            let totalGainInMode = 0;
+            modeHistory.forEach(h => totalGainInMode += parseFloat(h.roi));
+
+            const actualPctGain = totalGainInMode; 
             const compoundIndicator = document.getElementById('compound_indicator');
             const isBufferCompActive = BUFFER_ACTIVE_STATUS; 
 
@@ -1046,15 +1095,44 @@
         function refreshHistory() {
             const list = document.getElementById('backtest_list'); list.innerHTML = "";
             let netTotalIDR = 0;
-            SIM_HISTORY.forEach(h => {
+            let totalGainInMode = 0;
+            
+            // LOGIC FIX: Filter ledger history by current active mode
+            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
+            const filteredHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
+            
+            filteredHistory.forEach(h => {
                 netTotalIDR += h.net;
+                totalGainInMode += parseFloat(h.roi);
+                
                 const c = document.createElement('div'); 
+                const stampClass = h.mode === 'REAL' ? 'stamp-real' : 'stamp-sim';
+                const stampLabel = h.mode === 'REAL' ? 'REAL' : 'SIMULASI';
+
                 c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
-                c.innerHTML = `<div style="flex: 1;"><p class="text-[10px] text-white font-bold">${h.sym}/SOL</p></div><div style="flex: 1; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div><div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(4)} SOL</p></div>`;
+                c.innerHTML = `
+                    <div style="flex: 1.2;">
+                        <span class="ledger-stamp ${stampClass}">${stampLabel}</span>
+                        <p class="text-[10px] text-white font-bold inline">${h.sym}/SOL</p>
+                        <p class="text-[6px] text-white/40 uppercase mt-1">${h.date} ${h.time}</p>
+                    </div>
+                    <div style="flex: 0.8; text-align: center;">
+                        <p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p>
+                    </div>
+                    <div style="flex: 1; text-align: right;">
+                        <p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(4)} SOL</p>
+                    </div>`;
                 list.appendChild(c);
             });
-            document.getElementById('bt_total').innerText = SIM_HISTORY.length;
+            
+            document.getElementById('bt_total').innerText = filteredHistory.length;
             document.getElementById('bt_profit').innerText = (netTotalIDR/KURS_SOL_IDR).toFixed(4) + " SOL";
+            
+            // Logic Fix: Update Target Gain Display in Ledger
+            document.getElementById('bt_winrate').innerText = `${totalGainInMode.toFixed(2)}% / 25%`;
+            document.getElementById('bt_mode_display').innerText = IS_REAL ? "REAL SOLANA MAINNET" : "SIMULATED ENVIRONMENT";
+            
+            updateUI(); // Ensure main UI syncs with ledger logic
         }
 
         function openBacktest() { document.getElementById('backtest_modal').style.display = 'block'; refreshHistory(); }
