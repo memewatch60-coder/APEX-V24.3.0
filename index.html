@@ -797,9 +797,9 @@
         }
 
         async function performDailyReset() {
-            const totalAssetsNow = (IS_REAL ? (REAL_BAL + TOTAL_SECURED_REAL) : (SIM_BAL + TOTAL_SECURED_SIM));
-            const netProfitIDR = totalAssetsNow - START_BAL_DAY;
-            const actualPctGain = (netProfitIDR / START_BAL_DAY) * 100;
+            const totalAssetsNow = (IS_REAL ? REAL_BAL : SIM_BAL);
+            const netProfitIDR = totalAssetsNow - ALLOCATED_CAPITAL;
+            const actualPctGain = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
 
             // Logic Addition: Block Withdraw if Buffer Active
             if(BUFFER_ACTIVE_STATUS) {
@@ -927,7 +927,7 @@
                 manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Harvest Completed" : "Manual Security Profit (Non Active)";
             }
 
-            if (isBufferCompActive && actualPctGain < 100) {
+            if (isBufferCompActive) {
                 bufferIcon.classList.remove('hidden');
             } else {
                 bufferIcon.classList.add('hidden');
