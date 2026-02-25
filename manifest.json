@@ -1,0 +1,17 @@
+{
+  "name": "APEX GHOST SOLANA",
+  "short_name": "APEX GHOST",
+  "description": "Layer 4 Solana Trading Interface",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#020408",
+  "theme_color": "#020408",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
