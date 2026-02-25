@@ -317,7 +317,7 @@
 
     <script>
         const M_PIN = "081241955337";
-        const MODAL_DASAR = 5000000;
+        const MODAL_DASAR = 100 * 2500000; // SIMULATION 100 SOL FIX
         let KURS_SOL_IDR = 2500000; 
         
         const HELIUS_RPC_POOL = [
@@ -362,7 +362,7 @@
             "GRADE C+": { allocation: 0.25, sub_pct: 0.1, tp: 5.0, tp2: 15.0, sl: -3.0, trailing: 2.0, dump_shield: -2.0, priority: 1 }
         };
 
-        let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || 0;
+        let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || MODAL_DASAR;
         let TOTAL_SECURED_SIM = parseFloat(localStorage.getItem('apex_sim_vault')) || 0;
         let ACTIVE_CARDS_DATA = JSON.parse(localStorage.getItem('apex_active_cards')) || {};
 
@@ -407,23 +407,19 @@
             if(modalResolve) modalResolve(confirmed);
         }
 
-        // ADDED LOGIC: QUICK ALLOC PERCENTAGE
         function quickAlloc(pct) {
-            const b = IS_REAL ? REAL_BAL : (SIM_BAL || MODAL_DASAR);
+            const b = IS_REAL ? REAL_BAL : MODAL_DASAR;
             const amt = b * pct;
             document.getElementById('input_modal_virtual').value = formatVisualIDR(amt);
             syncFromIdrCustom('input_modal_virtual');
         }
 
-        // ADDED LOGIC: CLEAR CACHE ON SWITCH & REAL SYNC
         async function syncSimulationWithReal(isBecomingReal) {
-            // Force reset visual cache
             document.getElementById('feed_active').innerHTML = "";
             ACTIVE_CARDS_DATA = {};
             localStorage.setItem('apex_active_cards', JSON.stringify({}));
             
             if(isBecomingReal) {
-                // Fetch REAL balance from Private Key (Trade Wallet)
                 try {
                     const conn = await getSolanaConnection();
                     if(conn && API_KEY) {
@@ -439,9 +435,11 @@
                 localStorage.setItem('apex_start_bal', START_BAL_DAY);
                 addLog("SYNC", "REAL_WALLET_LINKED_SUCCESS");
             } else {
-                START_BAL_DAY = ALLOCATED_CAPITAL || SIM_BAL;
+                SIM_BAL = MODAL_DASAR;
+                START_BAL_DAY = SIM_BAL;
                 localStorage.setItem('apex_start_bal', START_BAL_DAY);
-                addLog("SYNC", "DECOUPLING_TO_SIMULATION");
+                localStorage.setItem('apex_sim_bal', SIM_BAL);
+                addLog("SYNC", "DECOUPLING_TO_SIMULATION (100 SOL)");
             }
             checkDailyTarget();
             updateUI();
@@ -515,7 +513,7 @@
         function triggerVirtualModal() {
             const gate = document.getElementById('modal_alokasi_gate');
             const balLabel = document.getElementById('label_real_balance');
-            const currentBal = IS_REAL ? REAL_BAL : (SIM_BAL || MODAL_DASAR);
+            const currentBal = IS_REAL ? REAL_BAL : MODAL_DASAR;
             balLabel.innerText = `[ Balance: ${(currentBal/KURS_SOL_IDR).toFixed(4)} SOL ]`;
             gate.classList.remove('hidden');
         }
@@ -531,10 +529,10 @@
         function lockVirtualCapital() {
             const inputStr = document.getElementById('input_modal_virtual').value.replace(/\D/g, "");
             const inputVal = parseInt(inputStr) || 0;
-            const currentBalance = IS_REAL ? REAL_BAL : (SIM_BAL || MODAL_DASAR);
+            const currentBalance = IS_REAL ? REAL_BAL : MODAL_DASAR;
 
-            if (inputVal < 500000 || inputVal > 500000000) {
-                proAlert("Range: 500rb - 500jt", "err");
+            if (inputVal < 500000 || inputVal > (currentBalance * 2)) {
+                proAlert("Input Tidak Valid", "err");
                 return;
             }
             
@@ -905,7 +903,6 @@
                 API_KEY = key; 
                 SECRET_KEY = secret; 
                 
-                // Fetch REAL balance
                 const conn = await getSolanaConnection();
                 const pubKey = new solanaWeb3.PublicKey(key);
                 const lamports = await conn.getBalance(pubKey);
