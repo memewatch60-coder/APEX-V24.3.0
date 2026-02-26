@@ -406,9 +406,9 @@
         let currentPipelineIdx = 0;
 
         const PATEN_STRATEGY = {
-            "STRICT A+": { allocation: 0.50, sub_pct: 1.0, tp: 2.0, tp2: 5.0, sl: -0.8, trailing: 0.3, dump_shield: -0.6, priority: 3 },
-            "AGGRESSIVE B+": { allocation: 0.25, sub_pct: 0.5, tp: 4.5, tp2: 10.0, sl: -1.5, trailing: 1.0, dump_shield: -1.0, priority: 2 },
-            "GRADE C+": { allocation: 0.25, sub_pct: 0.1, tp: 5.0, tp2: 15.0, sl: -3.0, trailing: 2.0, dump_shield: -2.0, priority: 1 }
+            "STRICT A+": { allocation: 0.20, tp: 20.0, sl: -10.0, trailing: 1.0, priority: 3, label: "Trend Mode" },
+            "AGGRESSIVE B+": { allocation: 0.10, tp: 15.0, sl: -5.0, trailing: 0.5, priority: 2, label: "Scalping Mode" },
+            "GRADE C+": { allocation: 0.05, tp: 5.0, sl: -2.0, trailing: 0.2, priority: 1, label: "Panic Sell Instan" }
         };
 
         let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || MODAL_DASAR;
@@ -438,6 +438,30 @@
         let IS_SNIPER_ACTIVE = false;
 
         let modalResolve = null;
+
+        // --- LAYER 2: LOGIC ADDITION BLOCK (STRIKE OPTIMIZATION) ---
+        function getOptimizedAllocation(grade, currentBalance) {
+            const config = PATEN_STRATEGY[grade];
+            if(!config) return 0;
+            return currentBalance * config.allocation;
+        }
+
+        async function triggerPanicAlert() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.5);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch(e) { console.log("Audio Alert Blocked"); }
+        }
+        // --- END LAYER 2 BLOCK ---
 
         async function updateSolanaPrice() {
             try {
@@ -719,25 +743,24 @@
             let stampType = "MANUAL_FIXED";
             const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
             
+            // --- LAYER 2: OPTIMIZED STRIKE BUY ---
             if(IS_SNIPER_ACTIVE) {
                 cost = currentBal * 0.10;
                 stampType = "SNIPER 10%";
             } else {
-                let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
-                cost = parseInt(costStr) || 0;
+                cost = getOptimizedAllocation(grade, currentBal);
+                stampType = "STRIKE OPTIMIZED";
+                
                 if(cost <= 0) {
-                    // Check if a percentage button is active
-                    const activePctBtn = document.querySelector('.pct-btn.pct-active');
-                    if(!activePctBtn) {
-                        proAlert("INPUT AMOUNT OR ACTIVATE SNIPER", "err");
-                        return;
-                    }
+                    let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
+                    cost = parseInt(costStr) || 0;
+                    stampType = "MANUAL_FIXED";
                 }
             }
             
             if (cost > currentBal) { proAlert("Insufficient Balance", "err"); return; }
+            if (cost < (0.01 * KURS_SOL_IDR)) { proAlert("DANA DI BAWAH MINIMAL GAS", "err"); return; }
             
-            // Multiple strikes for same symbol - use unique ID
             const uniqueStrikeId = id + "_" + Date.now();
             
             injectActiveCard(uniqueStrikeId, sym, grade, cost, stampType);
@@ -768,7 +791,7 @@
         async function startGhostEngine(id, sym, cost, grade, real, startRoi = 0) {
             let roi = startRoi;
             let maxRoi = roi; 
-            const config = PATEN_STRATEGY[grade] || { tp: 2.0, tp2: 5.0, l: -1.0, trailing: 0.5 };
+            const config = PATEN_STRATEGY[grade] || { tp: 2.0, sl: -1.0, trailing: 0.5 };
             let localTrend = [0, 0.1, -0.1, 0];
             
             const iv = setInterval(() => {
@@ -793,14 +816,30 @@
                     }
                 }
 
+                // --- LAYER 2: SMART EXIT & PANIC SELL GRADE C+ ---
                 let shouldVanish = false;
-                if (roi <= config.sl) shouldVanish = true;
-                else if (roi >= config.tp) {
-                    if (maxRoi - roi >= config.trailing || roi >= config.tp2) shouldVanish = true;
+                let exitReason = "AUTO_SYSTEM";
+
+                if (grade === "GRADE C+" && roi <= -2.0) {
+                    shouldVanish = true;
+                    exitReason = "PANIC SELL C+";
+                    triggerPanicAlert();
+                } else if (roi <= config.sl) {
+                    shouldVanish = true;
+                    exitReason = "STOP LOSS";
+                } else if (roi >= config.tp) {
+                    if (grade === "STRICT A+" && (maxRoi - roi >= config.trailing)) {
+                        shouldVanish = true;
+                        exitReason = "TRAILING STOP";
+                    } else if (grade !== "STRICT A+") {
+                        shouldVanish = true;
+                        exitReason = "TAKE PROFIT";
+                    }
                 }
+
                 if (shouldVanish) {
                     clearInterval(iv);
-                    vanishEngine(id, sym, cost, roi, real, grade, "AUTO_SYSTEM");
+                    vanishEngine(id, sym, cost, roi, real, grade, exitReason);
                 }
             }, 1000);
             ACTIVE_INTERVALS[id] = iv;
@@ -891,6 +930,9 @@
             const netProfitIDR = totalAssetsNow - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
 
+            // Threshold buffer 0.1% for fees
+            if(actualPctGain < 25.1) { proAlert("THRESHOLD 25.1% NOT REACHED", "err"); return; }
+
             if (BUFFER_ACTIVE_STATUS) {
                 if (actualPctGain >= 100) {
                     const confirmed = await openNeuralModal("Siklus Buffer 100% Selesai. Amankan Modal ke Vault?");
@@ -911,7 +953,7 @@
                         addLog("BUFFER", "PROFIT 100% SECURED - ENTERING COMPOUND MODE");
                         updateUI();
                     }
-                } else if (actualPctGain >= 25) {
+                } else if (actualPctGain >= 25.1) {
                     const confirmed = await openNeuralModal("Tarik Profit 25% Buffer ke Vault?");
                     if(confirmed) {
                          const profitOnly = netProfitIDR;
@@ -922,8 +964,6 @@
                 }
                 return;
             }
-
-            if(actualPctGain < 25) { proAlert("TARGET 25% NOT REACHED", "err"); return; }
 
             const confirmed = await openNeuralModal("Target 25% Harian Tercapai. Tarik ke Vault?");
             if(!confirmed) {
@@ -1000,7 +1040,6 @@
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
-            // LOCKED BALANCE LOGIC FOR BUFFER ACTIVE
             const lockedBox = document.getElementById('locked_balance_box');
             if(BUFFER_ACTIVE_STATUS) {
                 lockedBox.style.display = "block";
@@ -1009,26 +1048,23 @@
                 lockedBox.style.display = "none";
             }
 
-            // DYNAMIC TARGET REF: 25% from Locked (Active) or 25% from Main (Mode)
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
             const pctDisplay = actualPctGain.toFixed(2);
             
-            // FORCE LOGIC 00,00% / 25,00%
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25.00%`;
             document.getElementById('bt_winrate').innerText = `${pctDisplay}% / 25%`;
 
-            // BUFFER PROGRESS
             const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
             document.getElementById('buffer_master_fill').style.width = Math.min(100, Math.max(0, bufferPct)) + "%";
 
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
-            // MASTER LOGIC: Button Update Harian ONLY VISIBLE if Target Met and No Active Positions
-            if (actualPctGain >= 25 && activeCount === 0) {
+            // MASTER LOGIC: Threshold 25.1% applied here
+            if (actualPctGain >= 25.1 && activeCount === 0) {
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('blink-update');
             } else {
@@ -1048,7 +1084,7 @@
                 bufferStatusTag.innerText = "BUFFER MODE (COMPOUND)";
                 bufferStatusTag.classList.add('buffer-mode');
                 
-                // SAFETY BUFFER LOGIC: Compound only after 100% of Capital reached
+                // SAFETY BUFFER: Compounding only after 100% Capital reached
                 if(!MSP_USED_IN_CYCLE && bufferPct >= 100) {
                     manualSecBtn.classList.remove('btn-disabled');
                     manualSecBtn.classList.add('msp-active-glow');
@@ -1150,7 +1186,6 @@
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
-            // Target locked signals logic
             return actualPctGain >= 25 && !BUFFER_ACTIVE_STATUS;
         }
 
@@ -1196,10 +1231,9 @@
             const bufferRefBase = ALLOCATED_CAPITAL;
             const bufferNetProfit = b - bufferRefBase;
             
-            // Logic: Manual Security Profit only after 100% Capital reached
             if (bufferNetProfit < bufferRefBase) { proAlert("PROFIT 100% BELUM TERCAPAI", "err"); return; }
             
-            const withdrawAmt = bufferNetProfit; // Storing to Vault
+            const withdrawAmt = bufferNetProfit;
             const confirmed = await openNeuralModal(`Manual Security Profit: Amankan Profit ke Vault?`);
             
             if(confirmed) {
