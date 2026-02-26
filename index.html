@@ -111,15 +111,10 @@
         
         /* SYNC ADDITION - LOCKED BALANCE DISPLAY */
         #locked_balance_box { font-size: 8px; font-weight: 900; color: #00c2ff; background: rgba(0, 194, 255, 0.1); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(0, 194, 255, 0.3); margin-right: 4px; display: none; }
-
-        /* ANDROID OPTIMIZATION: CENTERED LAYOUT */
-        .container-tight { max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
     <div id="pro_toast_container"></div>
-
-    <div class="container-tight">
 
     <div id="modal_alokasi_gate" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-[30000] flex items-center justify-center p-6 animate__animated animate__fadeIn">
         <div class="master-panel w-full max-sm p-8 text-center border-green-500/50">
@@ -352,7 +347,7 @@
         </div>
     </div>
 
-    </div> <script>
+    <script>
         const M_PIN = "081241955337";
         const MODAL_DASAR = 100 * 2500000; // SIMULATION 100 SOL FIX
         let KURS_SOL_IDR = 2500000; 
@@ -496,6 +491,7 @@
             
             if(IS_SNIPER_ACTIVE) {
                 btn.classList.add('sniper-active-btn');
+                // Deactivate normal buttons
                 document.querySelectorAll('.pct-btn').forEach(b => {
                     if(b.id !== 'sniper_btn') b.classList.add('btn-disabled');
                 });
@@ -528,18 +524,24 @@
             document.getElementById('gate').style.display = 'none'; 
             document.getElementById('app').classList.remove('hidden');
             updateNeuralClock();
+            
             updateUI();
+            
             Object.keys(ACTIVE_CARDS_DATA).forEach(id => {
                 const data = ACTIVE_CARDS_DATA[id];
                 injectActiveCard(id, data.sym, data.grade, data.cost, data.stampType || "GHOST_LOGIC");
                 startGhostEngine(id, data.sym, data.cost, data.grade, data.real, data.roi);
             });
+
             setInterval(autoScanSolana, 4000); 
             autoScanSolana();
             refreshHistory();
             addLog("SYSTEM", "ENGINE_IGNITED_SOLANA_L4");
             setInterval(neuralChronosWatcher, 1000);
-            if(!IS_REAL) { triggerVirtualModal(); }
+
+            if(!IS_REAL) {
+                triggerVirtualModal();
+            }
         }
 
         function triggerVirtualModal() {
@@ -551,27 +553,46 @@
         }
 
         function skipAllocation() {
-            if (ALLOCATED_CAPITAL > 0) { document.getElementById('modal_alokasi_gate').classList.add('hidden'); }
-            else { proAlert("LOCK ALLOCATION FIRST", "err"); }
+            if (ALLOCATED_CAPITAL > 0) {
+                document.getElementById('modal_alokasi_gate').classList.add('hidden');
+            } else {
+                proAlert("LOCK ALLOCATION FIRST", "err");
+            }
         }
 
         function lockVirtualCapital() {
             const inputStr = document.getElementById('input_modal_virtual').value.replace(/\D/g, "");
             const inputVal = parseInt(inputStr) || 0;
             const currentBalance = IS_REAL ? REAL_BAL : MODAL_DASAR;
-            if (inputVal < 500000 || inputVal > (currentBalance * 2)) { proAlert("Input Tidak Valid", "err"); return; }
-            if (inputVal > currentBalance) { proAlert("Saldo Trade Tidak Mencukupi!", "err"); return; }
+
+            if (inputVal < 500000 || inputVal > (currentBalance * 2)) {
+                proAlert("Input Tidak Valid", "err");
+                return;
+            }
+            
+            if (inputVal > currentBalance) {
+                proAlert("Saldo Trade Tidak Mencukupi!", "err");
+                return;
+            }
+
             ALLOCATED_CAPITAL = inputVal;
             localStorage.setItem('apex_allocated_cap', ALLOCATED_CAPITAL);
-            if (!IS_REAL) { SIM_BAL = inputVal; localStorage.setItem('apex_sim_bal', SIM_BAL); }
+            
+            if (!IS_REAL) {
+                SIM_BAL = inputVal;
+                localStorage.setItem('apex_sim_bal', SIM_BAL);
+            }
+            
             START_BAL_DAY = inputVal; 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
+            
             BUFFER_ACTIVE_STATUS = true;
             MSP_USED_IN_CYCLE = false;
             LAST_BUFFER_CYCLE = Date.now();
             localStorage.setItem('apex_buffer_active', true);
             localStorage.setItem('apex_msp_used', false);
             localStorage.setItem('apex_last_buffer_cycle', LAST_BUFFER_CYCLE);
+
             document.getElementById('modal_alokasi_gate').classList.add('hidden');
             addLog("SYSTEM", `SOL_ALLOCATION_LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`);
             proAlert(`DANA TERKUNCI: ${formatVisualIDR(ALLOCATED_CAPITAL)}`, "success");
@@ -588,6 +609,7 @@
         async function autoScanSolana(force = false) {
             let success = false;
             let targetUrl = encodeURIComponent('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112');
+            
             for (let i = 0; i < PROXY_PIPELINE.length; i++) {
                 if (success) break;
                 let currentPath = PROXY_PIPELINE[currentPipelineIdx];
@@ -611,12 +633,16 @@
                 const change = parseFloat(p.priceChange.h24 || 0);
                 const vol = parseFloat(p.volume.h24 || 0);
                 const id = p.pairAddress;
+
                 if(!TREND_HISTORY[id]) TREND_HISTORY[id] = [];
                 TREND_HISTORY[id].push(change);
                 if(TREND_HISTORY[id].length > 10) TREND_HISTORY[id].shift();
+
                 if (sym.toUpperCase() === "SOL" || sym.toUpperCase() === "WSOL") return;
+
                 let passTier1 = change > 5.0; 
                 let passTier2 = vol > 100000;
+
                 if (passTier1 || passTier2 || force) {
                     let grade = change > 15 ? "STRICT A+" : (change > 8 ? "AGGRESSIVE B+" : "GRADE C+");
                     injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet);
@@ -638,6 +664,8 @@
                 const pctTag = existing.querySelector('.pct-value-tag');
                 if(pctTag) pctTag.innerText = `+${change}%`;
                 if(isTargetMet) existing.classList.add('signal-locked');
+                
+                // Sniper dynamic badge
                 const sniperBadge = existing.querySelector('.sniper-badge');
                 if(IS_SNIPER_ACTIVE && !sniperBadge) {
                     const sb = document.createElement('div'); sb.className = 'sniper-badge'; sb.innerText = 'SNIPER 10%';
@@ -662,28 +690,43 @@
                 </div>
                 ${IS_SNIPER_ACTIVE ? '<div class="sniper-badge">SNIPER 10%</div>' : ''}
                 <button onclick="handleStrike('${id}','${sym}',${price},'${grade}')" class="w-full bg-white/5 border border-white/10 py-2 mt-2 rounded-xl font-black text-[9px] text-white/60 uppercase strike-btn-logic">Strike</button>`;
+            
             document.getElementById('feed_signal').appendChild(div);
             setTimeout(() => { if(document.getElementById(`signal_${id}`)) document.getElementById(`signal_${id}`).remove(); }, 30000);
         }
 
         function handleStrike(id, sym, price, grade) {
             if(checkDailyTarget()) { proAlert("TARGET MET: SIGNALS LOCKED", "err"); return; }
-            let cost = 0; let stampType = "MANUAL_FIXED";
+            
+            let cost = 0;
+            let stampType = "MANUAL_FIXED";
             const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
-            if(IS_SNIPER_ACTIVE) { cost = currentBal * 0.10; stampType = "SNIPER 10%"; } 
-            else {
+            
+            if(IS_SNIPER_ACTIVE) {
+                cost = currentBal * 0.10;
+                stampType = "SNIPER 10%";
+            } else {
                 let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
                 cost = parseInt(costStr) || 0;
                 if(cost <= 0) {
+                    // Check if a percentage button is active
                     const activePctBtn = document.querySelector('.pct-btn.pct-active');
-                    if(!activePctBtn) { proAlert("INPUT AMOUNT OR ACTIVATE SNIPER", "err"); return; }
+                    if(!activePctBtn) {
+                        proAlert("INPUT AMOUNT OR ACTIVATE SNIPER", "err");
+                        return;
+                    }
                 }
             }
+            
             if (cost > currentBal) { proAlert("Insufficient Balance", "err"); return; }
+            
+            // Multiple strikes for same symbol - use unique ID
             const uniqueStrikeId = id + "_" + Date.now();
+            
             injectActiveCard(uniqueStrikeId, sym, grade, cost, stampType);
             if(!IS_REAL) { SIM_BAL -= cost; localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL -= cost; }
+            
             ACTIVE_CARDS_DATA[uniqueStrikeId] = { sym, grade, cost, real: IS_REAL, roi: 0, stampType };
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
             startGhostEngine(uniqueStrikeId, sym, cost, grade, IS_REAL);
@@ -706,28 +749,42 @@
         }
 
         async function startGhostEngine(id, sym, cost, grade, real, startRoi = 0) {
-            let roi = startRoi; let maxRoi = roi; 
+            let roi = startRoi;
+            let maxRoi = roi; 
             const config = PATEN_STRATEGY[grade] || { tp: 2.0, tp2: 5.0, l: -1.0, trailing: 0.5 };
             let localTrend = [0, 0.1, -0.1, 0];
+            
             const iv = setInterval(() => {
-                let change = (Math.random() * 1.5 - 0.6); roi += change; 
+                let change = (Math.random() * 1.5 - 0.6); 
+                roi += change; 
                 if (roi > maxRoi) maxRoi = roi;
+                
                 localTrend.push(change);
                 if(localTrend.length > 15) localTrend.shift();
+
                 const rDisp = document.getElementById(`roi_${id}`);
                 const rValDisp = document.getElementById(`roi_val_idr_${id}`);
                 const trendDisp = document.getElementById(`trend_strike_${id}`);
+
                 if(rDisp) {
                     rDisp.innerText = roi.toFixed(2) + "%";
                     rDisp.style.color = roi >= 0 ? "#14f195" : "#ff003c";
                     const profitIDR = Math.floor(cost * (roi / 100));
                     if(rValDisp) rValDisp.innerText = ` (${profitIDR >= 0 ? '+' : ''}${(profitIDR/KURS_SOL_IDR).toFixed(6)} SOL)`;
-                    if(trendDisp) { trendDisp.innerHTML = localTrend.map(t => `<div class="trend-bar ${t < 0 ? 'trend-danger' : ''}" style="height: ${Math.max(20, Math.min(100, 50 + (t*50)))}%"></div>`).join(''); }
+                    if(trendDisp) {
+                        trendDisp.innerHTML = localTrend.map(t => `<div class="trend-bar ${t < 0 ? 'trend-danger' : ''}" style="height: ${Math.max(20, Math.min(100, 50 + (t*50)))}%"></div>`).join('');
+                    }
                 }
+
                 let shouldVanish = false;
                 if (roi <= config.sl) shouldVanish = true;
-                else if (roi >= config.tp) { if (maxRoi - roi >= config.trailing || roi >= config.tp2) shouldVanish = true; }
-                if (shouldVanish) { clearInterval(iv); vanishEngine(id, sym, cost, roi, real, grade, "AUTO_SYSTEM"); }
+                else if (roi >= config.tp) {
+                    if (maxRoi - roi >= config.trailing || roi >= config.tp2) shouldVanish = true;
+                }
+                if (shouldVanish) {
+                    clearInterval(iv);
+                    vanishEngine(id, sym, cost, roi, real, grade, "AUTO_SYSTEM");
+                }
             }, 1000);
             ACTIVE_INTERVALS[id] = iv;
         }
@@ -764,33 +821,44 @@
             const profit = cost * (roi/100);
             if(!real) { SIM_BAL += (cost + profit); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL += (cost + profit); }
+            
             const historyEntry = { 
-                date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), 
-                sym, roi: roi.toFixed(2), net: profit, grade, mode: real ? 'REAL' : 'SIM',
+                date: new Date().toLocaleDateString(), 
+                time: new Date().toLocaleTimeString(), 
+                sym, 
+                roi: roi.toFixed(2), 
+                net: profit, 
+                grade, 
+                mode: real ? 'REAL' : 'SIM',
                 vaultAtTime: (real ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM),
                 mainAtTime: (real ? REAL_BAL : SIM_BAL),
                 stamp: ACTIVE_CARDS_DATA[id] ? ACTIVE_CARDS_DATA[id].stampType : "GHOST"
             };
+            
             SIM_HISTORY.unshift(historyEntry);
             localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
             delete ACTIVE_CARDS_DATA[id];
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
             if(document.getElementById(`active_${id}`)) document.getElementById(`active_${id}`).remove();
-            updateUI(); refreshHistory();
+            updateUI(); 
+            refreshHistory();
             addLog("EXIT", `${sym} ${roi.toFixed(2)}% [${reason}]`);
         }
 
         function downloadMonthlyExcel() {
             if (SIM_HISTORY.length === 0) { proAlert("NO DATA TO EXPORT", "err"); return; }
+            
             const currentModeFilter = IS_REAL ? 'REAL' : 'SIM';
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += "DATE,TIME,PAIR,GRADE,MODE,ROI(%),PROFIT(SOL),VAULT_BALANCE(SOL),MAIN_BALANCE(SOL)\n";
+            
             SIM_HISTORY.forEach(h => { 
                 const solProfit = (h.net/KURS_SOL_IDR).toFixed(6);
                 const solVault = (h.vaultAtTime/KURS_SOL_IDR).toFixed(4);
                 const solMain = (h.mainAtTime/KURS_SOL_IDR).toFixed(4);
                 csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${solProfit},${solVault},${solMain}\n`; 
             });
+            
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -805,13 +873,20 @@
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = totalAssetsNow - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
+
             if (BUFFER_ACTIVE_STATUS) {
                 if (actualPctGain >= 100) {
                     const confirmed = await openNeuralModal("Siklus Buffer 100% Selesai. Amankan Modal ke Vault?");
                     if (confirmed) {
                         const amountToVault = ALLOCATED_CAPITAL;
-                        if (!IS_REAL) { TOTAL_SECURED_SIM += amountToVault; SIM_BAL -= amountToVault; localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); } 
-                        else { TOTAL_SECURED_REAL += amountToVault; REAL_BAL -= amountToVault; }
+                        if (!IS_REAL) {
+                            TOTAL_SECURED_SIM += amountToVault;
+                            SIM_BAL -= amountToVault;
+                            localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                        } else {
+                            TOTAL_SECURED_REAL += amountToVault;
+                            REAL_BAL -= amountToVault;
+                        }
                         BUFFER_ACTIVE_STATUS = false;
                         localStorage.setItem('apex_buffer_active', false);
                         START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
@@ -830,32 +905,50 @@
                 }
                 return;
             }
+
             if(actualPctGain < 25) { proAlert("TARGET 25% NOT REACHED", "err"); return; }
+
             const confirmed = await openNeuralModal("Target 25% Harian Tercapai. Tarik ke Vault?");
             if(!confirmed) {
                 START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
                 localStorage.setItem('apex_start_bal', START_BAL_DAY);
                 addLog("COMPOUND", "25% PROFIT ADDED TO CAPITAL");
-                updateUI(); return;
+                updateUI();
+                return;
             }
+            
             const profitOnly = netProfitIDR;
-            if(!IS_REAL) { TOTAL_SECURED_SIM += profitOnly; SIM_BAL -= profitOnly; localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
-            else { TOTAL_SECURED_REAL += profitOnly; REAL_BAL -= profitOnly; }
+            if(!IS_REAL) {
+                TOTAL_SECURED_SIM += profitOnly;
+                SIM_BAL -= profitOnly;
+                localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                localStorage.setItem('apex_sim_bal', SIM_BAL);
+            } else {
+                TOTAL_SECURED_REAL += profitOnly;
+                REAL_BAL -= profitOnly;
+            }
+
             START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL); 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
-            refreshHistory(); updateUI();
+            refreshHistory();
+            updateUI();
             addLog("SYSTEM", "DAILY_PROFIT_SECURED_TO_VAULT");
         }
 
         function neuralChronosWatcher() {
             const now = Date.now();
             const currentDateString = new Date().toLocaleDateString();
+            
             if (currentDateString !== LAST_CHECKED_DATE) {
                 LAST_CHECKED_DATE = currentDateString;
                 localStorage.setItem('apex_last_date', LAST_CHECKED_DATE);
-                if (!BUFFER_ACTIVE_STATUS) { START_BAL_DAY = IS_REAL ? REAL_BAL : SIM_BAL; localStorage.setItem('apex_start_bal', START_BAL_DAY); }
+                if (!BUFFER_ACTIVE_STATUS) {
+                    START_BAL_DAY = IS_REAL ? REAL_BAL : SIM_BAL;
+                    localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                }
                 addLog("SYSTEM", "NEW_BLOCKCHAIN_DAY");
             }
+
             if (now >= LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) {
                 if (BUFFER_ACTIVE_STATUS) {
                     BUFFER_ACTIVE_STATUS = false;
@@ -867,6 +960,7 @@
                 LAST_BUFFER_CYCLE = now;
                 localStorage.setItem('apex_last_buffer_cycle', LAST_BUFFER_CYCLE);
             }
+
             if (BUFFER_ACTIVE_STATUS) {
                 const timeLeft = (LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) - now;
                 const days = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
@@ -874,50 +968,90 @@
                 const mins = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
                 const secs = Math.floor((timeLeft % (60 * 1000)) / 1000);
                 document.getElementById('buffer_countdown').innerText = `Reset: ${days}d ${hrs}:${mins}:${secs}`;
-            } else { document.getElementById('buffer_countdown').innerText = "Compound: Unlimited"; }
+            } else {
+                document.getElementById('buffer_countdown').innerText = "Compound: Unlimited";
+            }
         }
 
         function updateUI() { 
             const b = IS_REAL ? REAL_BAL : SIM_BAL; 
             const v = IS_REAL ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM;
+            
             document.getElementById('m_bal').innerText = (b/KURS_SOL_IDR).toFixed(4) + " SOL"; 
             document.getElementById('m_bal_idr').innerText = "RP " + formatVisualIDR(b);
             document.getElementById('vault_total').innerText = (v/KURS_SOL_IDR).toFixed(4) + " SOL";
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
+            
+            // LOCKED BALANCE LOGIC FOR BUFFER ACTIVE
             const lockedBox = document.getElementById('locked_balance_box');
-            if(BUFFER_ACTIVE_STATUS) { lockedBox.style.display = "block"; lockedBox.innerText = `LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`; } 
-            else { lockedBox.style.display = "none"; }
+            if(BUFFER_ACTIVE_STATUS) {
+                lockedBox.style.display = "block";
+                lockedBox.innerText = `LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`;
+            } else {
+                lockedBox.style.display = "none";
+            }
+
+            // DYNAMIC TARGET REF: 25% from Locked (Active) or 25% from Main (Mode)
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
             const pctDisplay = actualPctGain.toFixed(2);
+            
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25.00%`;
+
+            // BUFFER PROGRESS
             const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
             document.getElementById('buffer_master_fill').style.width = Math.min(100, Math.max(0, bufferPct)) + "%";
+
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
-            if (actualPctGain >= 25 && activeCount === 0) { updateBtn.classList.remove('btn-disabled'); updateBtn.classList.add('blink-update'); } 
-            else { updateBtn.classList.add('btn-disabled'); updateBtn.classList.remove('blink-update'); }
+            
+            // MASTER LOGIC: Button Update Harian ONLY VISIBLE if Target Met and No Active Positions
+            if (actualPctGain >= 25 && activeCount === 0) {
+                updateBtn.style.display = 'block';
+                updateBtn.classList.remove('btn-disabled');
+                updateBtn.classList.add('blink-update');
+            } else {
+                updateBtn.style.display = 'none';
+                updateBtn.classList.add('btn-disabled');
+                updateBtn.classList.remove('blink-update');
+            }
+
             const manualSecBtn = document.getElementById('manual_security_btn');
             const bufferStatusTag = document.getElementById('buffer_mode_status_tag');
+
             if (BUFFER_ACTIVE_STATUS) {
                 bufferStatusTag.innerText = "BUFFER ACTIVE (30D)";
                 bufferStatusTag.classList.remove('buffer-mode');
                 manualSecBtn.classList.add('btn-disabled');
-                manualSecBtn.innerText = "Security Profit (Locked in Buffer)";
+                manualSecBtn.innerText = "Manual Security Profit (Locked in Buffer)";
             } else {
                 bufferStatusTag.innerText = "BUFFER MODE (COMPOUND)";
                 bufferStatusTag.classList.add('buffer-mode');
-                if(!MSP_USED_IN_CYCLE && bufferPct >= 100) { manualSecBtn.classList.remove('btn-disabled'); manualSecBtn.classList.add('msp-active-glow'); manualSecBtn.innerText = "Manual Security Profit (Active)"; } 
-                else { manualSecBtn.classList.add('btn-disabled'); manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Moved to Vault" : "Security Profit (Locked < 100%)"; }
+                
+                // SAFETY BUFFER LOGIC: Compound only after 100% of Capital reached
+                if(!MSP_USED_IN_CYCLE && bufferPct >= 100) {
+                    manualSecBtn.classList.remove('btn-disabled');
+                    manualSecBtn.classList.add('msp-active-glow');
+                    manualSecBtn.innerText = "Manual Security Profit (Active)";
+                } else {
+                    manualSecBtn.classList.add('btn-disabled');
+                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Moved to Vault" : "Manual Security Profit (Locked < 100%)";
+                }
             }
         }
 
         function toggleMode() {
-            if(!IS_REAL) { document.getElementById('real_auth_modal').classList.remove('hidden'); } 
-            else { IS_REAL = false; REAL_BAL = 0; TOTAL_SECURED_REAL = 0; syncSimulationWithReal(false); }
+            if(!IS_REAL) {
+                document.getElementById('real_auth_modal').classList.remove('hidden');
+            } else { 
+                IS_REAL = false; 
+                REAL_BAL = 0;
+                TOTAL_SECURED_REAL = 0;
+                syncSimulationWithReal(false);
+            }
         }
 
         async function confirmRealMode() {
@@ -939,35 +1073,52 @@
                 syncSimulationWithReal(true);
                 triggerVirtualModal();
                 proAlert("PHANTOM LINKED: REAL MODE ACTIVE", "success");
-            } catch (e) { proAlert("RPC CONNECTION FAILED", "err"); btn.innerText = "Connect to Raydium LP"; btn.classList.remove('btn-disabled'); }
+            } catch (e) {
+                proAlert("RPC CONNECTION FAILED", "err");
+                btn.innerText = "Connect to Raydium LP";
+                btn.classList.remove('btn-disabled');
+            }
         }
 
         function cancelRealMode() { document.getElementById('real_auth_modal').classList.add('hidden'); }
         function formatVisualIDR(v) { return new Intl.NumberFormat('id-ID').format(Math.floor(v)); }
+        
         function syncFromIdr() { 
             let input = document.getElementById('input_idr');
             let v = input.value.replace(/\D/g, ""); 
-            if(v !== "") { input.value = formatVisualIDR(v); document.getElementById('convert_preview_main').innerText = `Convert: ${(parseInt(v)/KURS_SOL_IDR).toFixed(6)} SOL`; }
+            if(v !== "") {
+                input.value = formatVisualIDR(v);
+                document.getElementById('convert_preview_main').innerText = `Convert: ${(parseInt(v)/KURS_SOL_IDR).toFixed(6)} SOL`;
+            }
         }
+
         function syncFromIdrCustom(id) {
             let input = document.getElementById(id);
             let v = input.value.replace(/\D/g, "");
-            if(v !== "") { input.value = formatVisualIDR(v); document.getElementById('convert_preview_alloc').innerText = `EST: ${(parseInt(v)/KURS_SOL_IDR).toFixed(6)} SOL`; }
+            if(v !== "") {
+                input.value = formatVisualIDR(v);
+                document.getElementById('convert_preview_alloc').innerText = `EST: ${(parseInt(v)/KURS_SOL_IDR).toFixed(6)} SOL`;
+            }
         }
+        
         function applyPct(p, el) {
             if(IS_SNIPER_ACTIVE) return;
             const input = document.getElementById('input_idr');
             const b = ALLOCATED_CAPITAL || (IS_REAL ? REAL_BAL : SIM_BAL);
             document.querySelectorAll('.pct-btn').forEach(btn => btn.classList.remove('pct-active'));
             el.classList.add('pct-active');
-            input.value = formatVisualIDR(b * p); syncFromIdr();
+            input.value = formatVisualIDR(b * p);
+            syncFromIdr();
         }
+
         function addLog(t, m) { const l = document.getElementById('logs'); const d = document.createElement('div'); d.innerHTML = `<span class="text-cyan-400">[${t}]</span> ${m}`; l.prepend(d); }
         function proAlert(m, t) { 
-            const c = document.getElementById('pro_toast_container'); const to = document.createElement('div');
+            const c = document.getElementById('pro_toast_container'); 
+            const to = document.createElement('div');
             to.className = "pro-toast animate__animated animate__fadeInRight";
             to.innerHTML = `<i class="fa-solid ${t==='err'?'fa-circle-xmark text-red-500':'fa-circle-check text-cyan-400'}"></i><p class="text-[9px] font-bold text-white uppercase">${m}</p>`; 
-            c.appendChild(to); setTimeout(() => to.remove(), 3000); 
+            c.appendChild(to); 
+            setTimeout(() => to.remove(), 3000); 
         }
         function updateNeuralClock() { 
             setInterval(() => { 
@@ -976,26 +1127,38 @@
                 document.getElementById('neural_date').innerText = d.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}).toUpperCase();
             }, 1000); 
         }
+        
         function checkDailyTarget() { 
             const b = IS_REAL ? REAL_BAL : SIM_BAL;
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
-            return actualPctGain >= 25 && !BUFFER_ACTIVE_STATUS;
+            return actualPctGain >= 25;
         }
+
         function refreshHistory() {
             const list = document.getElementById('backtest_list'); list.innerHTML = "";
-            let netTotalIDR = 0; const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
+            let netTotalIDR = 0;
+            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
             const filteredHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
+            
             filteredHistory.forEach(h => {
-                netTotalIDR += h.net; const c = document.createElement('div'); 
+                netTotalIDR += h.net;
+                const c = document.createElement('div'); 
                 const stampClass = h.mode === 'REAL' ? 'stamp-real' : 'stamp-sim';
                 const stampLabel = h.mode === 'REAL' ? 'REAL' : 'SIMULASI';
                 c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
                 c.innerHTML = `
-                    <div style="flex: 1.2;"><span class="ledger-stamp ${stampClass}">${stampLabel}</span><p class="text-[10px] text-white font-bold inline">${h.sym}/SOL</p><p class="text-[6px] text-white/40 uppercase mt-1">${h.date} ${h.time}</p></div>
+                    <div style="flex: 1.2;">
+                        <span class="ledger-stamp ${stampClass}">${stampLabel}</span>
+                        <p class="text-[10px] text-white font-bold inline">${h.sym}/SOL</p>
+                        <p class="text-[6px] text-white/40 uppercase mt-1">${h.date} ${h.time}</p>
+                    </div>
                     <div style="flex: 0.8; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div>
-                    <div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(6)} SOL</p><p class="text-[5px] text-white/20">RP ${formatVisualIDR(h.net)}</p></div>`;
+                    <div style="flex: 1; text-align: right;">
+                        <p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(6)} SOL</p>
+                        <p class="text-[5px] text-white/20">RP ${formatVisualIDR(h.net)}</p>
+                    </div>`;
                 list.appendChild(c);
             });
             document.getElementById('bt_total').innerText = filteredHistory.length;
@@ -1003,22 +1166,35 @@
             document.getElementById('bt_profit_idr').innerText = "RP " + formatVisualIDR(netTotalIDR);
             updateUI(); 
         }
+
         function openBacktest() { document.getElementById('backtest_modal').style.display = 'block'; refreshHistory(); }
         function closeBacktest() { document.getElementById('backtest_modal').style.display = 'none'; }
+        
         async function secureToVault() {
             if(BUFFER_ACTIVE_STATUS) { proAlert("BUFFER ACTIVE: SECURITY LOCKED", "err"); return; }
             if(MSP_USED_IN_CYCLE) { proAlert("MSP ALREADY USED THIS CYCLE", "err"); return; }
+            
             const b = IS_REAL ? REAL_BAL : SIM_BAL;
             const bufferRefBase = ALLOCATED_CAPITAL;
             const bufferNetProfit = b - bufferRefBase;
+            
             if (bufferNetProfit < bufferRefBase) { proAlert("PROFIT 100% BELUM TERCAPAI", "err"); return; }
+            
             const withdrawAmt = bufferNetProfit;
             const confirmed = await openNeuralModal(`Manual Security Profit: Amankan Profit ke Vault?`);
+            
             if(confirmed) {
                 if (IS_REAL) { TOTAL_SECURED_REAL += withdrawAmt; REAL_BAL -= withdrawAmt; } 
-                else { TOTAL_SECURED_SIM += withdrawAmt; SIM_BAL -= withdrawAmt; localStorage.setItem('apex_sim_bal', SIM_BAL); localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); }
-                MSP_USED_IN_CYCLE = true; localStorage.setItem('apex_msp_used', true);
-                addLog("VAULT", `MANUAL SECURITY PROFIT: STORED TO VAULT`); updateUI(); 
+                else { 
+                    TOTAL_SECURED_SIM += withdrawAmt; 
+                    SIM_BAL -= withdrawAmt; 
+                    localStorage.setItem('apex_sim_bal', SIM_BAL); 
+                    localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); 
+                }
+                MSP_USED_IN_CYCLE = true; 
+                localStorage.setItem('apex_msp_used', true);
+                addLog("VAULT", `MANUAL SECURITY PROFIT: STORED TO VAULT`);
+                updateUI(); 
             }
         }
     </script>
