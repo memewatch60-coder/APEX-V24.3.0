@@ -624,13 +624,15 @@
 
         async function autoScanSolana(force = false) {
             let success = false;
-            let targetUrl = encodeURIComponent('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112');
+            /* PURE ADDITION: REAL-TIME BLOCKCHAIN DATA LOGIC */
+            let targetUrl = encodeURIComponent('https://api.dexscreener.com/latest-dex/pairs/solana');
             
             for (let i = 0; i < PROXY_PIPELINE.length; i++) {
                 if (success) break;
                 let currentPath = PROXY_PIPELINE[currentPipelineIdx];
                 try {
-                    const res = await fetch(currentPath + targetUrl);
+                    /* nocache ditambahkan agar proxy tidak memberi data lama */
+                    const res = await fetch(currentPath + targetUrl + '?nocache=' + Date.now());
                     const result = await res.json();
                     if (result && result.pairs) {
                         processSolanaPairs(result.pairs, force); 
@@ -646,9 +648,15 @@
             const isTargetMet = checkDailyTarget();
             pairs.forEach(p => {
                 const sym = p.baseToken.symbol;
-                const change = parseFloat(p.priceChange.h24 || 0);
-                const vol = parseFloat(p.volume.h24 || 0);
+                /* PURE ADDITION: M5 Change lebih sensitif untuk data real */
+                const change = parseFloat(p.priceChange?.m5 || p.priceChange?.h1 || 0);
+                const vol = parseFloat(p.volume?.h24 || 0);
                 const id = p.pairAddress;
+                
+                // LOGIC ADDITION: LIQUIDITY FILTER > 50 SOL
+                const liquidityUsd = p.liquidity ? parseFloat(p.liquidity.usd) : 0;
+                const liquiditySol = liquidityUsd / (KURS_SOL_IDR / 15000); // Estimasi SOL Price in USD
+                const isLiquiditySafe = liquiditySol > 50;
 
                 if(!TREND_HISTORY[id]) TREND_HISTORY[id] = [];
                 TREND_HISTORY[id].push(change);
@@ -664,15 +672,16 @@
                 // LAYER 2: Grade A, B, C (Jika Tier 1 Belum Muncul)
                 else if (change > 3) grade = "GRADE A";
                 else if (change > 1) grade = "GRADE B";
-                else if (change > -2) grade = "GRADE C";
+                else if (vol > 1000) grade = "GRADE C"; /* Koin baru aktif tanpa pergerakan besar */
 
-                if (grade !== "" || force) {
-                    injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet);
+                // PURE ADDITION: ONLY INJECT IF LIQUIDITY > 50 SOL
+                if ((grade !== "" && isLiquiditySafe) || force) {
+                    injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet, liquiditySol);
                 }
             });
         }
 
-        function injectSignalSpecific(id, sym, price, grade, change, vol, isTargetMet) {
+        function injectSignalSpecific(id, sym, price, grade, change, vol, isTargetMet, liq = 0) {
             const history = TREND_HISTORY[id] || [change];
             if(document.getElementById(`signal_${id}`)) {
                 const existing = document.getElementById(`signal_${id}`);
@@ -705,19 +714,27 @@
                     <div>
                         <p class="text-[7px] text-green-400 font-black pct-value-tag">${change}%</p>
                         <h3 class="text-sm font-black italic text-white">${sym}/SOL</h3>
+                        <p class="text-[6px] text-cyan-400 font-bold uppercase">Liq: ${liq.toFixed(1)} SOL</p>
                         <div class="trend-line-container">${history.map((h, i) => `<div class="trend-bar" style="height: ${Math.max(15, Math.min(100, Math.abs(h)*5))}%"></div>`).join('')}</div>
                     </div>
                 </div>
                 ${IS_SNIPER_ACTIVE ? '<div class="sniper-badge">SNIPER LAYER ACTIVE</div>' : ''}
-                <button onclick="handleStrike('${id}','${sym}',${price},'${grade}')" class="w-full bg-white/5 border border-white/10 py-2 mt-2 rounded-xl font-black text-[9px] text-white/60 uppercase strike-btn-logic">Strike</button>`;
+                <button onclick="handleStrike('${id}','${sym}',${price},'${grade}', ${liq})" class="w-full bg-white/5 border border-white/10 py-2 mt-2 rounded-xl font-black text-[9px] text-white/60 uppercase strike-btn-logic">Strike</button>`;
             
             document.getElementById('feed_signal').appendChild(div);
             setTimeout(() => { if(document.getElementById(`signal_${id}`)) document.getElementById(`signal_${id}`).remove(); }, 30000);
         }
 
-        function handleStrike(id, sym, price, grade) {
+        function handleStrike(id, sym, price, grade, liq = 999) {
             if(checkDailyTarget()) { proAlert("DAILY TARGET REACHED", "err"); return; }
             
+            // PURE ADDITION: HARD FILTER LIQUIDITY ON STRIKE
+            if(liq < 50) { 
+                proAlert("SECURITY: LIQUIDITY < 50 SOL", "err"); 
+                addLog("SECURITY", `BLOCKED_${sym}_LOW_LIQUIDITY`);
+                return; 
+            }
+
             let cost = 0;
             let stampType = "MANUAL_FIXED";
             const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
