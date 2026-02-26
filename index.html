@@ -982,6 +982,18 @@
             document.getElementById('locked_initial_balance').innerText = `MODAL: ${(lockedRef/KURS_SOL_IDR).toFixed(4)} SOL (RP ${formatVisualIDR(lockedRef)})`;
 
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            
+            /* ADDED LOGIC: CALCULATE FROM LEDGER FOR ACCURACY IN SIMULATION */
+            const currentModeFilter = IS_REAL ? 'REAL' : 'SIM';
+            const todayDate = new Date().toLocaleDateString();
+            let accumulatedLedgerProfit = 0;
+            SIM_HISTORY.forEach(h => {
+                if(h.mode === currentModeFilter && h.date === todayDate) {
+                    accumulatedLedgerProfit += h.net;
+                }
+            });
+            /* END ADDED LOGIC */
+
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
             const pctDisplay = actualPctGain.toFixed(2);
