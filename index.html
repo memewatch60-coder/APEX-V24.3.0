@@ -108,6 +108,9 @@
         #locked_initial_balance { font-size: 8px; font-weight: 900; color: var(--gold); background: rgba(212, 175, 55, 0.1); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.3); }
         .blink-update { animation: blink-update-anim 0.5s infinite alternate; }
         @keyframes blink-update-anim { from { opacity: 1; background: #ca8a04; } to { opacity: 0.5; background: #eab308; } }
+        
+        /* SYNC ADDITION - LOCKED BALANCE DISPLAY */
+        #locked_balance_box { font-size: 8px; font-weight: 900; color: #00c2ff; background: rgba(0, 194, 255, 0.1); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(0, 194, 255, 0.3); margin-right: 4px; display: none; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -230,11 +233,13 @@
                     </div>
                     <div class="flex flex-col items-end gap-1">
                         <div id="buffer_icon_container" class="mb-1 flex flex-col items-end">
-                            <div id="locked_initial_balance" class="mb-1">CAPITAL: 0.00 SOL (RP 0)</div>
+                            <div class="flex items-center">
+                                <div id="locked_balance_box">LOCKED: 0.00 SOL</div>
+                                <div id="locked_initial_balance" class="mb-1">CAPITAL: 0.00 SOL (RP 0)</div>
+                            </div>
                             <div class="flex items-center">
                                 <i class="fa-solid fa-shield-virus buffer-blink-icon"></i>
                                 <span id="buffer_mode_status_tag" class="blink-text-red-gold uppercase">BUFFER ACTIVE (30D)</span>
-                                <span id="locked_balance_section" class="ml-2 text-[8px] text-cyan-400 font-black italic"></span>
                             </div>
                             <div class="progress-container-master"><div id="buffer_master_fill" class="progress-fill-buffer" style="width: 0%"></div></div>
                             <div id="buffer_countdown">Siklus: 00:00:00</div>
@@ -461,12 +466,6 @@
                         const pubKey = new solanaWeb3.PublicKey(API_KEY);
                         const lamports = await conn.getBalance(pubKey);
                         REAL_BAL = (lamports / solanaWeb3.LAMPORTS_PER_SOL) * KURS_SOL_IDR;
-                        
-                        // Sync allocation if needed
-                        if(ALLOCATED_CAPITAL > REAL_BAL) {
-                            ALLOCATED_CAPITAL = REAL_BAL * 0.5; // Default safety
-                            localStorage.setItem('apex_allocated_cap', ALLOCATED_CAPITAL);
-                        }
                     }
                 } catch(e) { 
                     addLog("ERR", "RPC_BALANCE_FETCH_FAILED");
@@ -984,35 +983,32 @@
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
-            // Locked balance display
-            const lockedRef = ALLOCATED_CAPITAL || 0;
-            document.getElementById('locked_initial_balance').innerText = `MODAL: ${(lockedRef/KURS_SOL_IDR).toFixed(4)} SOL (RP ${formatVisualIDR(lockedRef)})`;
+            // LOCKED BALANCE LOGIC FOR BUFFER ACTIVE
+            const lockedBox = document.getElementById('locked_balance_box');
+            if(BUFFER_ACTIVE_STATUS) {
+                lockedBox.style.display = "block";
+                lockedBox.innerText = `LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`;
+            } else {
+                lockedBox.style.display = "none";
+            }
 
-            // Logic Fix: Daily Target Source
+            // DYNAMIC TARGET REF: 25% from Locked (Active) or 25% from Main (Mode)
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
             const pctDisplay = actualPctGain.toFixed(2);
             
-            // Update UI Labels for clarity
-            const lockedSec = document.getElementById('locked_balance_section');
-            if (BUFFER_ACTIVE_STATUS) {
-                lockedSec.innerText = `[Locked: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL]`;
-            } else {
-                lockedSec.innerText = "";
-            }
-
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25.00%`;
 
-            // BUFFER PROGRESS (Accumulation to 100%)
+            // BUFFER PROGRESS
             const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
             document.getElementById('buffer_master_fill').style.width = Math.min(100, Math.max(0, bufferPct)) + "%";
 
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
-            // Logic: Update Harian only if target 25% met and no active positions
+            // MASTER LOGIC: Button Update Harian ONLY VISIBLE if Target Met and No Active Positions
             if (actualPctGain >= 25 && activeCount === 0) {
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('blink-update');
@@ -1028,19 +1024,19 @@
                 bufferStatusTag.innerText = "BUFFER ACTIVE (30D)";
                 bufferStatusTag.classList.remove('buffer-mode');
                 manualSecBtn.classList.add('btn-disabled');
-                manualSecBtn.innerText = "Manual Security Profit (LOCKED)";
+                manualSecBtn.innerText = "Security Profit (Locked in Buffer)";
             } else {
                 bufferStatusTag.innerText = "BUFFER MODE (COMPOUND)";
                 bufferStatusTag.classList.add('buffer-mode');
                 
-                // Logic: Manual Security Profit only after 100% capital growth
+                // SAFETY BUFFER LOGIC: Compound only after 100% of Capital reached
                 if(!MSP_USED_IN_CYCLE && bufferPct >= 100) {
                     manualSecBtn.classList.remove('btn-disabled');
                     manualSecBtn.classList.add('msp-active-glow');
-                    manualSecBtn.innerText = "Manual Security Profit (ACTIVE)";
+                    manualSecBtn.innerText = "Manual Security Profit (Active)";
                 } else {
                     manualSecBtn.classList.add('btn-disabled');
-                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Vaulted" : "Manual Security Profit (LOCKED < 100%)";
+                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Moved to Vault" : "Security Profit (Locked < 100%)";
                 }
             }
         }
@@ -1135,7 +1131,8 @@
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
-            return actualPctGain >= 25;
+            // Target locked signals logic
+            return actualPctGain >= 25 && !BUFFER_ACTIVE_STATUS;
         }
 
         function refreshHistory() {
@@ -1180,11 +1177,11 @@
             const bufferRefBase = ALLOCATED_CAPITAL;
             const bufferNetProfit = b - bufferRefBase;
             
-            // Logic Check: Only secure if net growth is 100% of capital
-            if (bufferNetProfit < bufferRefBase) { proAlert("AKUMULASI 100% BELUM TERCAPAI", "err"); return; }
+            // Logic: Manual Security Profit only after 100% Capital reached
+            if (bufferNetProfit < bufferRefBase) { proAlert("PROFIT 100% BELUM TERCAPAI", "err"); return; }
             
-            const withdrawAmt = bufferNetProfit * 0.5; // Secure 50% of the profit
-            const confirmed = await openNeuralModal(`Amankan 50% Profit ke Vault (${(withdrawAmt/KURS_SOL_IDR).toFixed(6)} SOL)?`);
+            const withdrawAmt = bufferNetProfit; // Storing to Vault
+            const confirmed = await openNeuralModal(`Manual Security Profit: Amankan Profit ke Vault?`);
             
             if(confirmed) {
                 if (IS_REAL) { TOTAL_SECURED_REAL += withdrawAmt; REAL_BAL -= withdrawAmt; } 
@@ -1196,7 +1193,7 @@
                 }
                 MSP_USED_IN_CYCLE = true; 
                 localStorage.setItem('apex_msp_used', true);
-                addLog("HARVEST", `MANUAL SECURITY PROFIT: 50% SECURED`);
+                addLog("VAULT", `MANUAL SECURITY PROFIT: STORED TO VAULT`);
                 updateUI(); 
             }
         }
