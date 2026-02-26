@@ -234,6 +234,7 @@
                             <div class="flex items-center">
                                 <i class="fa-solid fa-shield-virus buffer-blink-icon"></i>
                                 <span id="buffer_mode_status_tag" class="blink-text-red-gold uppercase">BUFFER ACTIVE (30D)</span>
+                                <span id="locked_balance_section" class="ml-2 text-[8px] text-cyan-400 font-black italic"></span>
                             </div>
                             <div class="progress-container-master"><div id="buffer_master_fill" class="progress-fill-buffer" style="width: 0%"></div></div>
                             <div id="buffer_countdown">Siklus: 00:00:00</div>
@@ -460,7 +461,12 @@
                         const pubKey = new solanaWeb3.PublicKey(API_KEY);
                         const lamports = await conn.getBalance(pubKey);
                         REAL_BAL = (lamports / solanaWeb3.LAMPORTS_PER_SOL) * KURS_SOL_IDR;
-                        TOTAL_SECURED_REAL = 0; 
+                        
+                        // Sync allocation if needed
+                        if(ALLOCATED_CAPITAL > REAL_BAL) {
+                            ALLOCATED_CAPITAL = REAL_BAL * 0.5; // Default safety
+                            localStorage.setItem('apex_allocated_cap', ALLOCATED_CAPITAL);
+                        }
                     }
                 } catch(e) { 
                     addLog("ERR", "RPC_BALANCE_FETCH_FAILED");
@@ -476,6 +482,7 @@
                 localStorage.setItem('apex_sim_bal', SIM_BAL);
                 addLog("SYNC", "DECOUPLING_TO_SIMULATION (100 SOL)");
             }
+            checkDailyTarget();
             updateUI();
         }
 
@@ -659,6 +666,7 @@
                 if(pctTag) pctTag.innerText = `+${change}%`;
                 if(isTargetMet) existing.classList.add('signal-locked');
                 
+                // Sniper dynamic badge
                 const sniperBadge = existing.querySelector('.sniper-badge');
                 if(IS_SNIPER_ACTIVE && !sniperBadge) {
                     const sb = document.createElement('div'); sb.className = 'sniper-badge'; sb.innerText = 'SNIPER 10%';
@@ -702,6 +710,7 @@
                 let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
                 cost = parseInt(costStr) || 0;
                 if(cost <= 0) {
+                    // Check if a percentage button is active
                     const activePctBtn = document.querySelector('.pct-btn.pct-active');
                     if(!activePctBtn) {
                         proAlert("INPUT AMOUNT OR ACTIVATE SNIPER", "err");
@@ -712,6 +721,7 @@
             
             if (cost > currentBal) { proAlert("Insufficient Balance", "err"); return; }
             
+            // Multiple strikes for same symbol - use unique ID
             const uniqueStrikeId = id + "_" + Date.now();
             
             injectActiveCard(uniqueStrikeId, sym, grade, cost, stampType);
@@ -860,30 +870,63 @@
         }
 
         async function performDailyReset() {
-            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const totalAssetsNow = (IS_REAL ? REAL_BAL : SIM_BAL);
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
-            const netProfitIDR = b - refBase;
+            const netProfitIDR = totalAssetsNow - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
-            const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
 
-            if (activeCount > 0) {
-                proAlert("CLOSE ALL POSITIONS FIRST", "err");
+            if (BUFFER_ACTIVE_STATUS) {
+                if (actualPctGain >= 100) {
+                    const confirmed = await openNeuralModal("Siklus Buffer 100% Selesai. Amankan Modal ke Vault?");
+                    if (confirmed) {
+                        const amountToVault = ALLOCATED_CAPITAL;
+                        if (!IS_REAL) {
+                            TOTAL_SECURED_SIM += amountToVault;
+                            SIM_BAL -= amountToVault;
+                            localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                        } else {
+                            TOTAL_SECURED_REAL += amountToVault;
+                            REAL_BAL -= amountToVault;
+                        }
+                        BUFFER_ACTIVE_STATUS = false;
+                        localStorage.setItem('apex_buffer_active', false);
+                        START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
+                        localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                        addLog("BUFFER", "PROFIT 100% SECURED - ENTERING COMPOUND MODE");
+                        updateUI();
+                    }
+                } else if (actualPctGain >= 25) {
+                    const confirmed = await openNeuralModal("Tarik Profit 25% Buffer ke Vault?");
+                    if(confirmed) {
+                         const profitOnly = netProfitIDR;
+                         if(!IS_REAL) { TOTAL_SECURED_SIM += profitOnly; SIM_BAL -= profitOnly; } 
+                         else { TOTAL_SECURED_REAL += profitOnly; REAL_BAL -= profitOnly; }
+                         updateUI();
+                    }
+                }
                 return;
             }
 
             if(actualPctGain < 25) { proAlert("TARGET 25% NOT REACHED", "err"); return; }
 
-            const confirmed = await openNeuralModal(`Tarik Profit ${(netProfitIDR/KURS_SOL_IDR).toFixed(4)} SOL ke Vault?`);
-            if(!confirmed) return;
+            const confirmed = await openNeuralModal("Target 25% Harian Tercapai. Tarik ke Vault?");
+            if(!confirmed) {
+                START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
+                localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                addLog("COMPOUND", "25% PROFIT ADDED TO CAPITAL");
+                updateUI();
+                return;
+            }
             
+            const profitOnly = netProfitIDR;
             if(!IS_REAL) {
-                TOTAL_SECURED_SIM += netProfitIDR;
-                SIM_BAL -= netProfitIDR;
+                TOTAL_SECURED_SIM += profitOnly;
+                SIM_BAL -= profitOnly;
                 localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
                 localStorage.setItem('apex_sim_bal', SIM_BAL);
             } else {
-                TOTAL_SECURED_REAL += netProfitIDR;
-                REAL_BAL -= netProfitIDR;
+                TOTAL_SECURED_REAL += profitOnly;
+                REAL_BAL -= profitOnly;
             }
 
             START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL); 
@@ -941,23 +984,35 @@
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
             document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
+            // Locked balance display
             const lockedRef = ALLOCATED_CAPITAL || 0;
             document.getElementById('locked_initial_balance').innerText = `MODAL: ${(lockedRef/KURS_SOL_IDR).toFixed(4)} SOL (RP ${formatVisualIDR(lockedRef)})`;
 
+            // Logic Fix: Daily Target Source
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
-            const pctDisplay = Math.max(0, actualPctGain).toFixed(2);
+            const pctDisplay = actualPctGain.toFixed(2);
             
-            document.getElementById('target_progress').style.width = Math.min(100, Math.max(0, (actualPctGain / 25) * 100)) + "%"; 
+            // Update UI Labels for clarity
+            const lockedSec = document.getElementById('locked_balance_section');
+            if (BUFFER_ACTIVE_STATUS) {
+                lockedSec.innerText = `[Locked: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL]`;
+            } else {
+                lockedSec.innerText = "";
+            }
+
+            document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25.00%`;
 
-            const bufferPct = (netProfitIDR / (ALLOCATED_CAPITAL || 1)) * 100;
+            // BUFFER PROGRESS (Accumulation to 100%)
+            const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
             document.getElementById('buffer_master_fill').style.width = Math.min(100, Math.max(0, bufferPct)) + "%";
 
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
+            // Logic: Update Harian only if target 25% met and no active positions
             if (actualPctGain >= 25 && activeCount === 0) {
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('blink-update');
@@ -973,23 +1028,21 @@
                 bufferStatusTag.innerText = "BUFFER ACTIVE (30D)";
                 bufferStatusTag.classList.remove('buffer-mode');
                 manualSecBtn.classList.add('btn-disabled');
-                manualSecBtn.innerText = "Security Profit (Locked in Buffer)";
+                manualSecBtn.innerText = "Manual Security Profit (LOCKED)";
             } else {
                 bufferStatusTag.innerText = "BUFFER MODE (COMPOUND)";
                 bufferStatusTag.classList.add('buffer-mode');
                 
+                // Logic: Manual Security Profit only after 100% capital growth
                 if(!MSP_USED_IN_CYCLE && bufferPct >= 100) {
                     manualSecBtn.classList.remove('btn-disabled');
                     manualSecBtn.classList.add('msp-active-glow');
-                    manualSecBtn.innerText = "Manual Security Profit (Active)";
+                    manualSecBtn.innerText = "Manual Security Profit (ACTIVE)";
                 } else {
                     manualSecBtn.classList.add('btn-disabled');
-                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Security Harvested" : "Security Profit (Locked < 100%)";
+                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Vaulted" : "Manual Security Profit (LOCKED < 100%)";
                 }
             }
-            
-            const btWinRate = document.getElementById('bt_winrate');
-            if(btWinRate) btWinRate.innerText = `${pctDisplay}% / 25%`;
         }
 
         function toggleMode() {
@@ -997,6 +1050,8 @@
                 document.getElementById('real_auth_modal').classList.remove('hidden');
             } else { 
                 IS_REAL = false; 
+                REAL_BAL = 0;
+                TOTAL_SECURED_REAL = 0;
                 syncSimulationWithReal(false);
             }
         }
@@ -1028,7 +1083,7 @@
         }
 
         function cancelRealMode() { document.getElementById('real_auth_modal').classList.add('hidden'); }
-        function formatVisualIDR(v) { return new Intl.NumberFormat('id-ID').format(Math.floor(Math.abs(v))); }
+        function formatVisualIDR(v) { return new Intl.NumberFormat('id-ID').format(Math.floor(v)); }
         
         function syncFromIdr() { 
             let input = document.getElementById('input_idr');
@@ -1125,10 +1180,11 @@
             const bufferRefBase = ALLOCATED_CAPITAL;
             const bufferNetProfit = b - bufferRefBase;
             
+            // Logic Check: Only secure if net growth is 100% of capital
             if (bufferNetProfit < bufferRefBase) { proAlert("AKUMULASI 100% BELUM TERCAPAI", "err"); return; }
             
-            const withdrawAmt = bufferNetProfit; 
-            const confirmed = await openNeuralModal(`Pindahkan Profit ke Vault (${(withdrawAmt/KURS_SOL_IDR).toFixed(6)} SOL)?`);
+            const withdrawAmt = bufferNetProfit * 0.5; // Secure 50% of the profit
+            const confirmed = await openNeuralModal(`Amankan 50% Profit ke Vault (${(withdrawAmt/KURS_SOL_IDR).toFixed(6)} SOL)?`);
             
             if(confirmed) {
                 if (IS_REAL) { TOTAL_SECURED_REAL += withdrawAmt; REAL_BAL -= withdrawAmt; } 
@@ -1140,7 +1196,7 @@
                 }
                 MSP_USED_IN_CYCLE = true; 
                 localStorage.setItem('apex_msp_used', true);
-                addLog("VAULT", `MANUAL SECURITY PROFIT STORED`);
+                addLog("HARVEST", `MANUAL SECURITY PROFIT: 50% SECURED`);
                 updateUI(); 
             }
         }
