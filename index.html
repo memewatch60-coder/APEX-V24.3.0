@@ -15,6 +15,23 @@
     <style>
         :root { --bg: #020408; --neon: #14f195; --gold: #d4af37; --red: #ff003c; --green: #14f195; --purple: #9945ff; --blue-c: #00c2ff; }
         body { background: var(--bg); color: #e2e8f0; font-family: 'Inter', sans-serif; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        /* LOGIC ADDITION: BROWSER OPTIMIZATION */
+        @media (min-width: 768px) {
+            body { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at center, #0a0f1a 0%, #020408 100%); }
+            #app, #gate, #real_auth_modal, #modal_alokasi_gate { 
+                max-width: 450px; 
+                height: 95vh !important; 
+                margin: auto; 
+                position: relative; 
+                border: 1px solid rgba(20, 241, 149, 0.1);
+                border-radius: 3rem;
+                box-shadow: 0 0 100px rgba(0,0,0,0.8);
+                overflow: hidden;
+            }
+            #backtest_modal { max-width: 450px; left: 50% !important; transform: translateX(-50%); border-radius: 3rem; height: 95vh !important; top: 2.5vh !important; }
+        }
+
         .master-panel { background: rgba(2, 4, 8, 0.99); border: 2px solid var(--gold); border-radius: 4rem; box-shadow: 0 0 60px rgba(212, 175, 55, 0.2); }
         .input-god { background: rgba(255,255,255,0.03); border: 1px solid #1e293b; border-radius: 1.2rem; padding: 0.5rem 0.75rem; color: #fff; width: 100%; outline: none; font-weight: bold; font-size: 13px; transition: 0.3s; }
         .input-god:focus { border-color: var(--neon); background: rgba(20, 241, 149, 0.05); }
@@ -1010,11 +1027,9 @@
             
             // MASTER LOGIC: Button Update Harian ONLY VISIBLE if Target Met and No Active Positions
             if (actualPctGain >= 25 && activeCount === 0) {
-                updateBtn.style.display = 'block';
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('blink-update');
             } else {
-                updateBtn.style.display = 'none';
                 updateBtn.classList.add('btn-disabled');
                 updateBtn.classList.remove('blink-update');
             }
@@ -1026,7 +1041,7 @@
                 bufferStatusTag.innerText = "BUFFER ACTIVE (30D)";
                 bufferStatusTag.classList.remove('buffer-mode');
                 manualSecBtn.classList.add('btn-disabled');
-                manualSecBtn.innerText = "Manual Security Profit (Locked in Buffer)";
+                manualSecBtn.innerText = "Security Profit (Locked in Buffer)";
             } else {
                 bufferStatusTag.innerText = "BUFFER MODE (COMPOUND)";
                 bufferStatusTag.classList.add('buffer-mode');
@@ -1038,7 +1053,7 @@
                     manualSecBtn.innerText = "Manual Security Profit (Active)";
                 } else {
                     manualSecBtn.classList.add('btn-disabled');
-                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Moved to Vault" : "Manual Security Profit (Locked < 100%)";
+                    manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Profit Moved to Vault" : "Security Profit (Locked < 100%)";
                 }
             }
         }
@@ -1133,7 +1148,8 @@
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
-            return actualPctGain >= 25;
+            // Target locked signals logic
+            return actualPctGain >= 25 && !BUFFER_ACTIVE_STATUS;
         }
 
         function refreshHistory() {
@@ -1178,9 +1194,10 @@
             const bufferRefBase = ALLOCATED_CAPITAL;
             const bufferNetProfit = b - bufferRefBase;
             
+            // Logic: Manual Security Profit only after 100% Capital reached
             if (bufferNetProfit < bufferRefBase) { proAlert("PROFIT 100% BELUM TERCAPAI", "err"); return; }
             
-            const withdrawAmt = bufferNetProfit;
+            const withdrawAmt = bufferNetProfit; // Storing to Vault
             const confirmed = await openNeuralModal(`Manual Security Profit: Amankan Profit ke Vault?`);
             
             if(confirmed) {
