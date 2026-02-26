@@ -1015,8 +1015,10 @@
             const actualPctGain = (netProfitIDR / refBase) * 100;
             const pctDisplay = actualPctGain.toFixed(2);
             
+            // FORCE LOGIC 00,00% / 25,00%
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${pctDisplay}% / 25.00%`;
+            document.getElementById('bt_winrate').innerText = `${pctDisplay}% / 25%`;
 
             // BUFFER PROGRESS
             const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
