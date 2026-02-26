@@ -81,7 +81,8 @@
         
         /* SNIPER STYLE */
         .sniper-active { background: #ff003c !important; color: white !important; border-color: #ff003c !important; box-shadow: 0 0 20px #ff003c; }
-        .sniper-stamp { background: #ff003c; color: white; font-size: 7px; font-weight: 900; padding: 2px 8px; border-radius: 4px; position: absolute; top: 30px; left: 10px; z-index: 5; }
+        /* FIX POSITION STEMPEL SNIPER AGAR TIDAK MENUTUPI NAMA KOIN */
+        .sniper-stamp { background: #ff003c; color: white; font-size: 7px; font-weight: 900; padding: 2px 8px; border-radius: 4px; position: absolute; bottom: 5px; right: 5px; z-index: 5; }
 
         #popup_m_key, #popup_m_cold {
             word-break: break-all;
@@ -99,6 +100,9 @@
         .stamp-real { background: rgba(20, 241, 149, 0.2); color: #14f195; border: 1px solid rgba(20, 241, 149, 0.5); }
         .progress-container-master { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
         .progress-fill-buffer { height: 100%; background: linear-gradient(90deg, #f59e0b, #d4af37); box-shadow: 0 0 10px #f59e0b; transition: width 0.5s ease-in-out; }
+        
+        /* FIX UNTUK TOMBOL UPDATE HARIAN AGAR MASIH TERLIHAT TAPI TERKUNCI */
+        .daily-locked { background: #334155 !important; color: #94a3b8 !important; opacity: 0.5; cursor: not-allowed; pointer-events: none; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -227,7 +231,7 @@
                                 <i id="buffer_type_icon" class="fa-solid fa-shield-virus buffer-blink-icon"></i>
                                 <span id="buffer_blink_text" class="blink-text-red-gold">BUFFER ACTIVE</span>
                                 <div id="locked_stats_panel" class="ml-2 flex flex-col items-end border-l border-white/10 pl-2">
-                                    <span class="text-[5px] text-white/40 uppercase">Locked Capital</span>
+                                    <span class="text-[5px] text-white/40 uppercase">Locked Balance</span>
                                     <span id="locked_val_sol" class="text-[7px] text-yellow-500 font-black">0.00 SOL</span>
                                     <span id="locked_val_idr" class="text-[5px] text-green-500 font-bold">RP 0</span>
                                 </div>
@@ -248,7 +252,7 @@
                     <p id="convert_preview_main" class="text-[8px] text-white/40 font-black uppercase tracking-widest ml-2">Convert: 0.0000 SOL</p>
                 </div>
                 <div class="flex justify-between items-center px-1">
-                    <div class="grid grid-cols-4 gap-1 w-2/3">
+                    <div class="grid grid-cols-4 gap-1 w-2/3" id="percent_button_group">
                         <button id="btn_25" onclick="applyPct(0.25, this)" class="pct-btn">25%</button>
                         <button id="btn_50" onclick="applyPct(0.50, this)" class="pct-btn">50%</button>
                         <button id="btn_75" onclick="applyPct(0.75, this)" class="pct-btn">75%</button>
@@ -329,7 +333,7 @@
                     <i class="fa-solid fa-file-csv mr-1"></i> Export
                 </button>
                 
-                <button id="daily_update_btn" onclick="performDailyReset()" class="hidden bg-yellow-600 text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all">
+                <button id="daily_update_btn" onclick="performDailyReset()" class="bg-yellow-600 text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all daily-locked">
                     <i class="fa-solid fa-calendar-check mr-1"></i> Withdraw to Vault
                 </button>
             </div>
@@ -401,7 +405,6 @@
         let LAST_CHECKED_DATE = localStorage.getItem('apex_last_date') || new Date().toLocaleDateString();
         let ALLOCATED_CAPITAL = parseFloat(localStorage.getItem('apex_allocated_cap')) || 0;
 
-        // NEW LOGIC VARIABLES
         let IS_SNIPER_MODE = false;
         let BUFFER_ACTIVE_STATUS = localStorage.getItem('apex_buffer_active') === 'true';
         let LAST_BUFFER_CYCLE = parseInt(localStorage.getItem('apex_last_buffer_cycle')) || Date.now();
@@ -471,18 +474,28 @@
             updateUI();
         }
 
-        // SNIPER LOGIC
         function toggleSniperMode() {
             IS_SNIPER_MODE = !IS_SNIPER_MODE;
             const btn = document.getElementById('sniper_btn');
+            const pctBtns = document.getElementById('percent_button_group');
+            const inputIdr = document.getElementById('input_idr');
+
             if(IS_SNIPER_MODE) {
                 btn.classList.add('sniper-active');
+                // MUTUAL EXCLUSION: LOCK MANUAL INPUT KETIKA SNIPER ON
+                pctBtns.classList.add('btn-disabled');
+                inputIdr.classList.add('btn-disabled');
+                inputIdr.value = "";
+                document.querySelectorAll('.pct-btn').forEach(b => b.classList.remove('pct-active'));
                 proAlert("SNIPER MODE: ENGAGED", "success");
             } else {
                 btn.classList.remove('sniper-active');
+                // MUTUAL EXCLUSION: UNLOCK MANUAL INPUT KETIKA SNIPER OFF
+                pctBtns.classList.remove('btn-disabled');
+                inputIdr.classList.remove('btn-disabled');
                 proAlert("SNIPER MODE: DISENGAGED", "err");
             }
-            autoScanSolana(true); // Refresh signal cards to show/hide stamp
+            autoScanSolana(true); 
         }
 
         async function verifyAdmin(b = false) { 
@@ -673,13 +686,22 @@
 
         function handleStrike(id, sym, price, grade) {
             if(checkDailyTarget()) { proAlert("TARGET MET: SIGNALS LOCKED", "err"); return; }
+            
+            // VALIDASI LOGIK: CEK APAKAH ADA INPUT ATAU SNIPER AKTIF
             let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
             let cost = parseInt(costStr) || 0;
             const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
             const config = PATEN_STRATEGY[grade];
             let stampType = IS_SNIPER_MODE ? "SNIPER" : "GHOST_LOGIC";
             
-            if (cost <= 0) { 
+            // JIKA TIDAK ADA INPUT DAN TIDAK ADA SNIPER, MAKA FATAL ERROR
+            if (cost <= 0 && !IS_SNIPER_MODE) { 
+                proAlert("ENTRY AMOUNT EMPTY!", "err");
+                return; 
+            }
+
+            // LOGIKA SNIPER OTOMATIS AMBIL ALLOCATION
+            if (cost <= 0 && IS_SNIPER_MODE) {
                 let baseAllocation = ALLOCATED_CAPITAL * (config.allocation); 
                 cost = baseAllocation * config.sub_pct; 
             }
@@ -713,7 +735,8 @@
                 <div class="flex flex-col items-center py-2"><div id="roi_${id}_${index}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}_${index}" class="text-[8px] font-bold text-white/60"> (+0.0000 SOL)</div></div>
                 <div class="trend-line-container mb-2" id="trend_strike_${id}_${index}"></div>
                 <p class="text-[6px] text-white/40 text-center uppercase mb-1">Entry: ${(cost/KURS_SOL_IDR).toFixed(4)} SOL</p>
-                <div class="stamp-logic">${stampType}</div>`;
+                <div class="stamp-logic">${stampType}</div>
+                ${stampType === 'SNIPER' ? '<div class="sniper-stamp">SNIPER</div>' : ''}`;
             document.getElementById('feed_active').prepend(div);
         }
 
@@ -800,6 +823,11 @@
             const netProfitIDR = totalAssetsNow - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
 
+            if (actualPctGain < 25) {
+                proAlert("TARGET NOT REACHED!", "err");
+                return;
+            }
+
             const confirmed = await openNeuralModal("Withdraw Profit 25% ke Vault?");
             if(confirmed) {
                 const profitToVault = refBase * 0.25;
@@ -812,8 +840,6 @@
                     REAL_BAL -= profitToVault;
                 }
                 proAlert("PROFIT SECURED TO VAULT", "success");
-            } else {
-                proAlert("BUFFER MODE CONTINUED", "success");
             }
 
             START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
@@ -831,11 +857,10 @@
             document.getElementById('vault_total').innerText = (v/KURS_SOL_IDR).toFixed(4) + " SOL";
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
             
-            // LOCKED BALANCE DISPLAY
+            // LOCKED BALANCE DISPLAY (SESUAI REQUEST: LOCKED BALANCE SECTION)
             document.getElementById('locked_val_sol').innerText = (START_BAL_DAY/KURS_SOL_IDR).toFixed(4) + " SOL";
             document.getElementById('locked_val_idr').innerText = "RP " + formatVisualIDR(START_BAL_DAY);
 
-            // TARGET CALCULATION
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
@@ -854,13 +879,14 @@
                 bufferIcon.className = "fa-solid fa-recycle buffer-blink-icon text-green-400";
             }
 
-            // UPDATE HARIAN LOCKDOWN
+            // UPDATE HARIAN LOCK LOGIC: BERKEDIP JIKA TERPACHAI
             const updateBtn = document.getElementById('daily_update_btn');
-            if(actualPctGain >= 25 && !BUFFER_ACTIVE_STATUS) {
-                updateBtn.classList.remove('hidden');
+            if(actualPctGain >= 25) {
+                updateBtn.classList.remove('daily-locked');
                 updateBtn.classList.add('animate__animated', 'animate__flash', 'animate__infinite');
             } else {
-                updateBtn.classList.add('hidden');
+                updateBtn.classList.add('daily-locked');
+                updateBtn.classList.remove('animate__animated', 'animate__flash', 'animate__infinite');
             }
 
             // MSP LOGIC
@@ -934,7 +960,8 @@
 
         async function secureToVault() {
             if(BUFFER_ACTIVE_STATUS || MSP_USED_IN_CYCLE) return;
-            const withdrawAmt = (IS_REAL ? REAL_BAL : SIM_BAL) - ALLOCATED_CAPITAL;
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const withdrawAmt = b - ALLOCATED_CAPITAL;
             if (withdrawAmt < ALLOCATED_CAPITAL) return;
             
             const confirmed = await openNeuralModal(`Panen 50% Profit Compound?`);
@@ -965,6 +992,8 @@
             }
         }
         function applyPct(p, el) {
+            // JIKA SNIPER AKTIF, TOMBOL PERSENTASE TIDAK BISA DIKLIK
+            if(IS_SNIPER_MODE) return;
             document.querySelectorAll('.pct-btn').forEach(btn => btn.classList.remove('pct-active'));
             el.classList.add('pct-active');
             document.getElementById('input_idr').value = formatVisualIDR(ALLOCATED_CAPITAL * p);
