@@ -49,3 +49,4 @@ APEX GHOST is an advanced, AI-driven trading interface designed for the Solana b
    ```bash
    git clone [https://github.com/YourUsername/apex-ghost.git](https://github.com/YourUsername/apex-ghost.git)
    cd apex-ghost
+
