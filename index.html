@@ -68,7 +68,7 @@
 
         .compound-active { border-color: var(--green) !important; box-shadow: 0 0 20px rgba(20, 241, 149, 0.2) !important; }
         .btn-disabled { opacity: 0.3; pointer-events: none !important; filter: grayscale(1); cursor: not-allowed; }
-        .buffer-mode-text { color: #f59e0b !important; text-shadow: 0 0 5px #f59e0b; }
+        .buffer-mode { color: #f59e0b !important; text-shadow: 0 0 5px #f59e0b; }
         .stamp-logic { position: absolute; bottom: 5px; right: 10px; font-size: 6px; font-weight: 900; color: rgba(212, 175, 55, 0.5); font-style: italic; text-transform: uppercase; }
         #manual_security_btn { border: 1px solid var(--neon); color: var(--neon); background: rgba(20, 241, 149, 0.05); }
         #manual_security_btn:hover { background: var(--neon); color: black; box-shadow: 0 0 15px var(--neon); }
@@ -79,11 +79,6 @@
         .blink-text-red-gold { animation: blink-rg 0.8s infinite; font-weight: 900; font-size: 7px; margin-left: 5px; }
         @keyframes blink-rg { 0% { color: #ff003c; opacity: 1; } 50% { color: #d4af37; opacity: 0.5; } 100% { color: #ff003c; opacity: 1; } }
         
-        /* SNIPER STYLE */
-        .sniper-active { background: #ff003c !important; color: white !important; border-color: #ff003c !important; box-shadow: 0 0 20px #ff003c; }
-        /* FIX POSITION STEMPEL SNIPER AGAR TIDAK MENUTUPI NAMA KOIN */
-        .sniper-stamp { background: #ff003c; color: white; font-size: 7px; font-weight: 900; padding: 2px 8px; border-radius: 4px; position: absolute; bottom: 5px; right: 5px; z-index: 5; }
-
         #popup_m_key, #popup_m_cold {
             word-break: break-all;
             white-space: pre-wrap;
@@ -94,15 +89,18 @@
         }
         .pct-alloc-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 5px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #14f195; transition: 0.2s; }
         .pct-alloc-btn:active { transform: scale(0.9); background: #14f195; color: #000; }
+
+        /* Logic Additions Styling */
         #buffer_countdown { font-family: 'JetBrains Mono', monospace; font-size: 6px; color: #f59e0b; margin-top: 2px; }
+
+        /* Additional Logic Styling For Ledger */
         .ledger-stamp { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
         .stamp-sim { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); }
         .stamp-real { background: rgba(20, 241, 149, 0.2); color: #14f195; border: 1px solid rgba(20, 241, 149, 0.5); }
+
+        /* Progress Bar Master */
         .progress-container-master { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
         .progress-fill-buffer { height: 100%; background: linear-gradient(90deg, #f59e0b, #d4af37); box-shadow: 0 0 10px #f59e0b; transition: width 0.5s ease-in-out; }
-        
-        /* FIX UNTUK TOMBOL UPDATE HARIAN AGAR MASIH TERLIHAT TAPI TERKUNCI */
-        .daily-locked { background: #334155 !important; color: #94a3b8 !important; opacity: 0.5; cursor: not-allowed; pointer-events: none; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -201,10 +199,7 @@
                 <div class="w-8 h-8 rounded-full border border-cyan-500 flex items-center justify-center"><i class="fa-solid fa-bolt text-cyan-400 text-sm"></i></div>
                 <div class="leading-none">
                     <h2 class="text-[9px] font-black text-white italic tracking-tighter uppercase mb-0.5 glitch-text">Apex_Solana_Ghost_V24</h2>
-                    <div id="neural_clock" class="flex flex-col">
-                        <span id="clock_time">SYNCING SOLANA...</span>
-                        <span id="clock_date" class="text-[5px] text-cyan-600 uppercase font-black">STRIKE DATE</span>
-                    </div>
+                    <div id="neural_clock">SYNCING SOLANA...</div>
                     <span id="failover_status" class="text-[6px] text-green-400 font-bold uppercase tracking-widest">LAYER 4: ACTIVE</span>
                 </div>
             </div>
@@ -226,15 +221,10 @@
                         <p id="vault_idr_main" class="text-[7px] text-green-400 font-bold mt-1">GHOST VAULT (RP 0)</p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
-                        <div id="buffer_icon_container" class="mb-1 flex flex-col items-end">
+                        <div id="buffer_icon_container" class="hidden mb-1 flex flex-col items-end">
                             <div class="flex items-center">
-                                <i id="buffer_type_icon" class="fa-solid fa-shield-virus buffer-blink-icon"></i>
-                                <span id="buffer_blink_text" class="blink-text-red-gold">BUFFER ACTIVE</span>
-                                <div id="locked_stats_panel" class="ml-2 flex flex-col items-end border-l border-white/10 pl-2">
-                                    <span class="text-[5px] text-white/40 uppercase">Locked Balance</span>
-                                    <span id="locked_val_sol" class="text-[7px] text-yellow-500 font-black">0.00 SOL</span>
-                                    <span id="locked_val_idr" class="text-[5px] text-green-500 font-bold">RP 0</span>
-                                </div>
+                                <i class="fa-solid fa-shield-virus buffer-blink-icon"></i>
+                                <span id="buffer_blink_text" class="blink-text-red-gold">BUFFER ACTIVE (100% CAP)</span>
                             </div>
                             <div class="progress-container-master"><div id="buffer_master_fill" class="progress-fill-buffer" style="width: 0%"></div></div>
                             <div id="buffer_countdown">Siklus: 00:00:00</div>
@@ -252,19 +242,19 @@
                     <p id="convert_preview_main" class="text-[8px] text-white/40 font-black uppercase tracking-widest ml-2">Convert: 0.0000 SOL</p>
                 </div>
                 <div class="flex justify-between items-center px-1">
-                    <div class="grid grid-cols-4 gap-1 w-2/3" id="percent_button_group">
+                    <div class="grid grid-cols-4 gap-1 w-2/3">
                         <button id="btn_25" onclick="applyPct(0.25, this)" class="pct-btn">25%</button>
                         <button id="btn_50" onclick="applyPct(0.50, this)" class="pct-btn">50%</button>
                         <button id="btn_75" onclick="applyPct(0.75, this)" class="pct-btn">75%</button>
                         <button id="btn_100" onclick="applyPct(1.00, this)" class="pct-btn">100%</button>
                     </div>
-                    <button onclick="toggleSniperMode()" id="sniper_btn" class="pct-btn w-10 border-red-500/30 text-red-400"><i class="fa-solid fa-crosshairs"></i></button>
+                    <button onclick="toggleAutoCompound()" id="compound_btn" class="pct-btn w-10 border-green-500/30 text-green-400"><i class="fa-solid fa-plus-minus"></i></button>
                     <p id="kurs_text" class="text-[7px] text-yellow-500 font-black uppercase">SOLANA LIVE</p>
                 </div>
                 <div class="mt-2 bg-white/5 rounded-full h-1.5 overflow-hidden border border-white/10"><div id="target_progress" class="bg-green-500 h-full transition-all duration-500" style="width: 0%"></div></div>
-                <div class="flex justify-between mt-1"><span class="text-[6px] text-white/40 uppercase">Daily Progress</span><span id="target_stat" class="text-[6px] text-green-400 font-bold uppercase">0.00% / 25.00%</span></div>
+                <div class="flex justify-between mt-1"><span class="text-[6px] text-white/40 uppercase">Daily Progress</span><span id="target_stat" class="text-[6px] text-green-400 font-bold uppercase">0% / 25%</span></div>
                 
-                <button id="manual_security_btn" onclick="secureToVault()" class="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-white/40 uppercase hover:text-cyan-400 transition-all italic">Manual Security Profit (Locked)</button>
+                <button id="manual_security_btn" onclick="secureToVault()" class="w-full mt-2 py-2 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-white/40 uppercase hover:text-cyan-400 transition-all italic">Manual Security Profit (Non Active)</button>
             </div>
         </div>
 
@@ -322,8 +312,7 @@
                 </div>
                 <div class="bg-white/5 p-3 rounded-2xl border border-white/10 text-center">
                     <p class="text-[6px] text-white/40 uppercase font-bold mb-1">Net Gain (SOL)</p>
-                    <p id="bt_profit" class="text-[10px] font-black text-yellow-500">0.000000</p>
-                    <p id="bt_profit_idr_footer" class="text-[5px] text-green-500 font-bold mt-1">RP 0</p>
+                    <p id="bt_profit" class="text-sm font-black text-yellow-500">+0.00</p>
                 </div>
             </div>
             <div id="backtest_list" class="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-hide"></div>
@@ -333,7 +322,7 @@
                     <i class="fa-solid fa-file-csv mr-1"></i> Export
                 </button>
                 
-                <button id="daily_update_btn" onclick="performDailyReset()" class="bg-yellow-600 text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all daily-locked">
+                <button id="daily_update_btn" onclick="performDailyReset()" class="bg-yellow-600 text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all btn-disabled">
                     <i class="fa-solid fa-calendar-check mr-1"></i> Withdraw to Vault
                 </button>
             </div>
@@ -344,7 +333,7 @@
 
     <script>
         const M_PIN = "081241955337";
-        const MODAL_DASAR = 100 * 2500000; 
+        const MODAL_DASAR = 100 * 2500000; // SIMULATION 100 SOL FIX
         let KURS_SOL_IDR = 2500000; 
         
         const HELIUS_RPC_POOL = [
@@ -402,10 +391,12 @@
         let ACTIVE_INTERVALS = {};
         let TREND_HISTORY = {}; 
 
+        let IS_AUTO_COMPOUND = localStorage.getItem('apex_auto_comp') === 'true';
         let LAST_CHECKED_DATE = localStorage.getItem('apex_last_date') || new Date().toLocaleDateString();
+        let IS_VAULTED_TODAY = localStorage.getItem('apex_is_vaulted') === 'true';
         let ALLOCATED_CAPITAL = parseFloat(localStorage.getItem('apex_allocated_cap')) || 0;
 
-        let IS_SNIPER_MODE = false;
+        // Logic Additions Variables
         let BUFFER_ACTIVE_STATUS = localStorage.getItem('apex_buffer_active') === 'true';
         let LAST_BUFFER_CYCLE = parseInt(localStorage.getItem('apex_last_buffer_cycle')) || Date.now();
         let MSP_USED_IN_CYCLE = localStorage.getItem('apex_msp_used') === 'true';
@@ -471,31 +462,30 @@
                 localStorage.setItem('apex_sim_bal', SIM_BAL);
                 addLog("SYNC", "DECOUPLING_TO_SIMULATION (100 SOL)");
             }
+            checkDailyTarget();
             updateUI();
         }
 
-        function toggleSniperMode() {
-            IS_SNIPER_MODE = !IS_SNIPER_MODE;
-            const btn = document.getElementById('sniper_btn');
-            const pctBtns = document.getElementById('percent_button_group');
-            const inputIdr = document.getElementById('input_idr');
+        function toggleAutoCompound() {
+            document.querySelectorAll('.pct-btn').forEach(btn => {
+                if(btn.id !== 'compound_btn') btn.classList.remove('pct-active');
+            });
+            document.getElementById('input_idr').value = "";
 
-            if(IS_SNIPER_MODE) {
-                btn.classList.add('sniper-active');
-                // MUTUAL EXCLUSION: LOCK MANUAL INPUT KETIKA SNIPER ON
-                pctBtns.classList.add('btn-disabled');
-                inputIdr.classList.add('btn-disabled');
-                inputIdr.value = "";
-                document.querySelectorAll('.pct-btn').forEach(b => b.classList.remove('pct-active'));
-                proAlert("SNIPER MODE: ENGAGED", "success");
+            IS_AUTO_COMPOUND = !IS_AUTO_COMPOUND;
+            localStorage.setItem('apex_auto_comp', IS_AUTO_COMPOUND);
+            const btn = document.getElementById('compound_btn');
+            const indicator = document.getElementById('compound_indicator');
+            if(IS_AUTO_COMPOUND) {
+                btn.classList.add('pct-active');
+                indicator.classList.remove('hidden');
+                proAlert("AUTO-COMPOUND: ENGAGED", "success");
             } else {
-                btn.classList.remove('sniper-active');
-                // MUTUAL EXCLUSION: UNLOCK MANUAL INPUT KETIKA SNIPER OFF
-                pctBtns.classList.remove('btn-disabled');
-                inputIdr.classList.remove('btn-disabled');
-                proAlert("SNIPER MODE: DISENGAGED", "err");
+                btn.classList.remove('pct-active');
+                indicator.classList.add('hidden');
+                proAlert("AUTO-COMPOUND: DISENGAGED", "err");
             }
-            autoScanSolana(true); 
+            checkDailyTarget();
         }
 
         async function verifyAdmin(b = false) { 
@@ -516,16 +506,18 @@
             document.getElementById('gate').style.display = 'none'; 
             document.getElementById('app').classList.remove('hidden');
             updateNeuralClock();
+            
+            if(IS_AUTO_COMPOUND) {
+                document.getElementById('compound_btn').classList.add('pct-active');
+                document.getElementById('compound_indicator').classList.remove('hidden');
+            }
+
             updateUI();
             
             Object.keys(ACTIVE_CARDS_DATA).forEach(id => {
-                const dataArray = ACTIVE_CARDS_DATA[id];
-                if(Array.isArray(dataArray)) {
-                    dataArray.forEach((data, index) => {
-                        injectActiveCard(id, data.sym, data.grade, data.cost, data.stampType || "GHOST_LOGIC", index);
-                        startGhostEngine(id, data.sym, data.cost, data.grade, data.real, data.roi, index);
-                    });
-                }
+                const data = ACTIVE_CARDS_DATA[id];
+                injectActiveCard(id, data.sym, data.grade, data.cost, data.stampType || "GHOST_LOGIC");
+                startGhostEngine(id, data.sym, data.cost, data.grade, data.real, data.roi);
             });
 
             setInterval(autoScanSolana, 4000); 
@@ -534,7 +526,7 @@
             addLog("SYSTEM", "ENGINE_IGNITED_SOLANA_L4");
             setInterval(neuralChronosWatcher, 1000);
 
-            if(!IS_REAL && ALLOCATED_CAPITAL === 0) {
+            if(!IS_REAL) {
                 triggerVirtualModal();
             }
         }
@@ -560,8 +552,15 @@
             const inputVal = parseInt(inputStr) || 0;
             const currentBalance = IS_REAL ? REAL_BAL : MODAL_DASAR;
 
-            if (inputVal < 500000) { proAlert("Minimal 500rb", "err"); return; }
-            if (inputVal > currentBalance) { proAlert("Saldo Tidak Cukup", "err"); return; }
+            if (inputVal < 500000 || inputVal > (currentBalance * 2)) {
+                proAlert("Input Tidak Valid", "err");
+                return;
+            }
+            
+            if (inputVal > currentBalance) {
+                proAlert("Saldo Trade Tidak Mencukupi!", "err");
+                return;
+            }
 
             ALLOCATED_CAPITAL = inputVal;
             localStorage.setItem('apex_allocated_cap', ALLOCATED_CAPITAL);
@@ -574,6 +573,7 @@
             START_BAL_DAY = inputVal; 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
             
+            // Logic Additions: Reset Buffer on New Deposit
             BUFFER_ACTIVE_STATUS = true;
             MSP_USED_IN_CYCLE = false;
             LAST_BUFFER_CYCLE = Date.now();
@@ -583,6 +583,7 @@
 
             document.getElementById('modal_alokasi_gate').classList.add('hidden');
             addLog("SYSTEM", `SOL_ALLOCATION_LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`);
+            proAlert(`DANA TERKUNCI: ${formatVisualIDR(ALLOCATED_CAPITAL)}`, "success");
             updateUI();
         }
 
@@ -650,27 +651,16 @@
                 }
                 const pctTag = existing.querySelector('.pct-value-tag');
                 if(pctTag) pctTag.innerText = `+${change}%`;
-                
-                const sniperStamp = existing.querySelector('.sniper-stamp');
-                if(IS_SNIPER_MODE && !sniperStamp) {
-                    const stamp = document.createElement('div');
-                    stamp.className = 'sniper-stamp animate__animated animate__zoomIn';
-                    stamp.innerText = 'SNIPER';
-                    existing.appendChild(stamp);
-                } else if(!IS_SNIPER_MODE && sniperStamp) {
-                    sniperStamp.remove();
-                }
-                
                 if(isTargetMet) existing.classList.add('signal-locked');
                 return;
             }
             const div = document.createElement('div'); div.id = `signal_${id}`;
             const gClass = grade.includes('A') ? 'grade-a-card' : (grade.includes('B') ? 'grade-b-card' : 'grade-c-card');
+            const strategyRef = PATEN_STRATEGY[grade] || { priority: 3, allocation: 0.1 };
             div.className = `card-base mb-2 animate__animated animate__fadeInLeft ${gClass} ${isTargetMet ? 'signal-locked' : ''}`;
             div.innerHTML = `
                 ${isTargetMet ? '<div class="locked-badge">TARGET REACHED</div>' : ''}
                 <div style="position:absolute;top:0;right:0;background:#d4af37;color:black;font-size:8px;font-weight:900;padding:3px 12px;border-bottom-left-radius:12px;">${grade}</div>
-                ${IS_SNIPER_MODE ? '<div class="sniper-stamp animate__animated animate__zoomIn">SNIPER</div>' : ''}
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[7px] text-green-400 font-black pct-value-tag">+${change}%</p>
@@ -686,76 +676,63 @@
 
         function handleStrike(id, sym, price, grade) {
             if(checkDailyTarget()) { proAlert("TARGET MET: SIGNALS LOCKED", "err"); return; }
-            
-            // VALIDASI LOGIK: CEK APAKAH ADA INPUT ATAU SNIPER AKTIF
             let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
             let cost = parseInt(costStr) || 0;
             const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
-            const config = PATEN_STRATEGY[grade];
-            let stampType = IS_SNIPER_MODE ? "SNIPER" : "GHOST_LOGIC";
+            const config = PATEN_STRATEGY[grade] || { allocation: 0.25, sub_pct: 0.1 };
+            let stampType = "MANUAL_FIXED";
             
-            // JIKA TIDAK ADA INPUT DAN TIDAK ADA SNIPER, MAKA FATAL ERROR
-            if (cost <= 0 && !IS_SNIPER_MODE) { 
-                proAlert("ENTRY AMOUNT EMPTY!", "err");
-                return; 
-            }
-
-            // LOGIKA SNIPER OTOMATIS AMBIL ALLOCATION
-            if (cost <= 0 && IS_SNIPER_MODE) {
+            if (cost <= 0) { 
                 let baseAllocation = ALLOCATED_CAPITAL * (config.allocation); 
                 cost = baseAllocation * config.sub_pct; 
+                stampType = `AUTO_${(config.sub_pct*100).toFixed(0)}%_OF_ALLOC`; 
             }
             
             if (cost > currentBal) { proAlert("Insufficient Balance", "err"); return; }
+            if(document.getElementById(`signal_${id}`)) document.getElementById(`signal_${id}`).remove();
             
-            if(!ACTIVE_CARDS_DATA[id]) ACTIVE_CARDS_DATA[id] = [];
-            const index = ACTIVE_CARDS_DATA[id].length;
-            
-            const cardData = { sym, grade, cost, real: IS_REAL, roi: 0, stampType };
-            ACTIVE_CARDS_DATA[id].push(cardData);
-            
-            injectActiveCard(id, sym, grade, cost, stampType, index);
+            injectActiveCard(id, sym, grade, cost, stampType);
             if(!IS_REAL) { SIM_BAL -= cost; localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL -= cost; }
             
+            ACTIVE_CARDS_DATA[id] = { sym, grade, cost, real: IS_REAL, roi: 0, stampType };
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
-            startGhostEngine(id, sym, cost, grade, IS_REAL, 0, index);
+            startGhostEngine(id, sym, cost, grade, IS_REAL);
             updateUI();
         }
 
-        function injectActiveCard(id, sym, grade, cost, stampType, index) {
-            const cardId = `active_${id}_${index}`;
-            if(document.getElementById(cardId)) return;
-            const div = document.createElement('div'); div.id = cardId;
-            div.setAttribute('onclick', `manualVanish('${id}', '${sym}', ${cost}, '${grade}', ${index})`);
+        function injectActiveCard(id, sym, grade, cost, stampType = "GHOST_LOGIC") {
+            if(document.getElementById(`active_${id}`)) return;
+            const div = document.createElement('div'); div.id = `active_${id}`;
+            div.setAttribute('onclick', `manualVanish('${id}', '${sym}', ${cost}, '${grade}')`);
             div.className = `card-base mb-2 border-2 border-cyan-500 bg-[#0d0f14] animate__animated animate__pulse animate__infinite clickable-card relative`;
             div.innerHTML = `
                 <div class="flex justify-between items-center"><span class="text-[7px] text-yellow-500 font-black">${grade}</span><span class="text-[6px] text-red-500 animate-pulse font-black">SOL-LIVE</span></div>
-                <h3 class="text-[11px] font-black text-white italic">${sym}/SOL #${index+1}</h3>
-                <div class="flex flex-col items-center py-2"><div id="roi_${id}_${index}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}_${index}" class="text-[8px] font-bold text-white/60"> (+0.0000 SOL)</div></div>
-                <div class="trend-line-container mb-2" id="trend_strike_${id}_${index}"></div>
+                <h3 class="text-[11px] font-black text-white italic">${sym}/SOL</h3>
+                <div class="flex flex-col items-center py-2"><div id="roi_${id}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}" class="text-[8px] font-bold text-white/60"> (+${((cost*0)/KURS_SOL_IDR).toFixed(4)} SOL)</div></div>
+                <div class="trend-line-container mb-2" id="trend_strike_${id}"></div>
                 <p class="text-[6px] text-white/40 text-center uppercase mb-1">Entry: ${(cost/KURS_SOL_IDR).toFixed(4)} SOL</p>
-                <div class="stamp-logic">${stampType}</div>
-                ${stampType === 'SNIPER' ? '<div class="sniper-stamp">SNIPER</div>' : ''}`;
+                <div class="stamp-logic">${stampType}</div>`;
             document.getElementById('feed_active').prepend(div);
         }
 
-        async function startGhostEngine(id, sym, cost, grade, real, startRoi, index) {
-            let roi = startRoi || 0;
+        async function startGhostEngine(id, sym, cost, grade, real, startRoi = 0) {
+            let roi = startRoi;
             let maxRoi = roi; 
-            const config = PATEN_STRATEGY[grade];
+            const config = PATEN_STRATEGY[grade] || { tp: 2.0, tp2: 5.0, l: -1.0, trailing: 0.5 };
             let localTrend = [0, 0.1, -0.1, 0];
             
             const iv = setInterval(() => {
                 let change = (Math.random() * 1.5 - 0.6); 
                 roi += change; 
                 if (roi > maxRoi) maxRoi = roi;
+                
                 localTrend.push(change);
                 if(localTrend.length > 15) localTrend.shift();
 
-                const rDisp = document.getElementById(`roi_${id}_${index}`);
-                const rValDisp = document.getElementById(`roi_val_idr_${id}_${index}`);
-                const trendDisp = document.getElementById(`trend_strike_${id}_${index}`);
+                const rDisp = document.getElementById(`roi_${id}`);
+                const rValDisp = document.getElementById(`roi_val_idr_${id}`);
+                const trendDisp = document.getElementById(`trend_strike_${id}`);
 
                 if(rDisp) {
                     rDisp.innerText = roi.toFixed(2) + "%";
@@ -767,26 +744,48 @@
                     }
                 }
 
-                if (roi <= config.sl || (roi >= config.tp && (maxRoi - roi >= config.trailing || roi >= config.tp2))) {
+                let shouldVanish = false;
+                if (roi <= config.sl) shouldVanish = true;
+                else if (roi >= config.tp) {
+                    if (maxRoi - roi >= config.trailing || roi >= config.tp2) shouldVanish = true;
+                }
+                if (shouldVanish) {
                     clearInterval(iv);
-                    vanishEngine(id, sym, cost, roi, real, grade, "AUTO_SYSTEM", index);
+                    vanishEngine(id, sym, cost, roi, real, grade, "AUTO_SYSTEM");
                 }
             }, 1000);
-            ACTIVE_INTERVALS[`${id}_${index}`] = iv;
+            ACTIVE_INTERVALS[id] = iv;
         }
 
-        async function manualVanish(id, sym, cost, grade, index) {
-            const rDisp = document.getElementById(`roi_${id}_${index}`);
+        async function manualVanish(id, sym, cost, grade) {
+            const rDisp = document.getElementById(`roi_${id}`);
             if(!rDisp) return;
             const currentRoi = parseFloat(rDisp.innerText.replace('%', ''));
             const confirmed = await openNeuralModal(`Exit ${sym} at ${currentRoi}%?`);
             if(confirmed) {
-                if(ACTIVE_INTERVALS[`${id}_${index}`]) clearInterval(ACTIVE_INTERVALS[`${id}_${index}`]);
-                vanishEngine(id, sym, cost, currentRoi, IS_REAL, grade, "MANUAL_STRIKE", index);
+                if(ACTIVE_INTERVALS[id]) clearInterval(ACTIVE_INTERVALS[id]);
+                vanishEngine(id, sym, cost, currentRoi, IS_REAL, grade, "MANUAL_STRIKE");
             }
         }
 
-        function vanishEngine(id, sym, cost, roi, real, grade, reason, index) {
+        async function panicSellAll() {
+            const activeCards = document.querySelectorAll('#feed_active > div');
+            if(activeCards.length === 0) return;
+            const confirmed = await openNeuralModal(`Liquidate ALL Solana positions?`);
+            if(confirmed) {
+                activeCards.forEach(card => {
+                    const id = card.id.replace('active_', '');
+                    const rDisp = document.getElementById(`roi_${id}`);
+                    if(rDisp && ACTIVE_INTERVALS[id]) {
+                        const currentRoi = parseFloat(rDisp.innerText.replace('%', ''));
+                        clearInterval(ACTIVE_INTERVALS[id]);
+                        vanishEngine(id, ACTIVE_CARDS_DATA[id].sym, ACTIVE_CARDS_DATA[id].cost, currentRoi, ACTIVE_CARDS_DATA[id].real, ACTIVE_CARDS_DATA[id].grade, "PANIC_SELL");
+                    }
+                });
+            }
+        }
+
+        function vanishEngine(id, sym, cost, roi, real, grade, reason) {
             const profit = cost * (roi/100);
             if(!real) { SIM_BAL += (cost + profit); localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL += (cost + profit); }
@@ -798,23 +797,42 @@
                 roi: roi.toFixed(2), 
                 net: profit, 
                 grade, 
-                mode: real ? 'REAL' : 'SIM'
+                mode: real ? 'REAL' : 'SIM',
+                vaultAtTime: (real ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM),
+                mainAtTime: (real ? REAL_BAL : SIM_BAL)
             };
             
             SIM_HISTORY.unshift(historyEntry);
             localStorage.setItem('apex_sim_history_idx', JSON.stringify(SIM_HISTORY));
-            
-            if(ACTIVE_CARDS_DATA[id]) {
-                ACTIVE_CARDS_DATA[id].splice(index, 1);
-                if(ACTIVE_CARDS_DATA[id].length === 0) delete ACTIVE_CARDS_DATA[id];
-            }
+            delete ACTIVE_CARDS_DATA[id];
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
-            
-            const el = document.getElementById(`active_${id}_${index}`);
-            if(el) el.remove();
+            if(document.getElementById(`active_${id}`)) document.getElementById(`active_${id}`).remove();
             updateUI(); 
             refreshHistory();
             addLog("EXIT", `${sym} ${roi.toFixed(2)}% [${reason}]`);
+        }
+
+        function downloadMonthlyExcel() {
+            if (SIM_HISTORY.length === 0) { proAlert("NO DATA TO EXPORT", "err"); return; }
+            
+            const currentModeFilter = IS_REAL ? 'REAL' : 'SIM';
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "DATE,TIME,PAIR,GRADE,MODE,ROI(%),PROFIT(SOL),VAULT_BALANCE(SOL),MAIN_BALANCE(SOL)\n";
+            
+            SIM_HISTORY.forEach(h => { 
+                const solProfit = (h.net/KURS_SOL_IDR).toFixed(6);
+                const solVault = (h.vaultAtTime/KURS_SOL_IDR).toFixed(4);
+                const solMain = (h.mainAtTime/KURS_SOL_IDR).toFixed(4);
+                csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${solProfit},${solVault},${solMain}\n`; 
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `APEX_LEDGER_${currentModeFilter}_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         async function performDailyReset() {
@@ -823,29 +841,112 @@
             const netProfitIDR = totalAssetsNow - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
 
-            if (actualPctGain < 25) {
-                proAlert("TARGET NOT REACHED!", "err");
+            // Logic 1: Buffer Active 100% Force Withdraw
+            if (BUFFER_ACTIVE_STATUS) {
+                const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
+                if (bufferPct >= 100) {
+                    const confirmed = await openNeuralModal("Siklus Buffer 100% Selesai. Amankan ke Vault?");
+                    if (confirmed) {
+                        const amountToVault = ALLOCATED_CAPITAL; // Amankan 100% modal awal ke Vault
+                        if (!IS_REAL) {
+                            TOTAL_SECURED_SIM += amountToVault;
+                            SIM_BAL -= amountToVault;
+                            localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                        } else {
+                            TOTAL_SECURED_REAL += amountToVault;
+                            REAL_BAL -= amountToVault;
+                        }
+                        BUFFER_ACTIVE_STATUS = false;
+                        localStorage.setItem('apex_buffer_active', false);
+                        START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
+                        localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                        addLog("BUFFER", "PROFIT 100% SECURED - ENTERING COMPOUND MODE");
+                        updateUI();
+                    }
+                } else {
+                    proAlert("TARGET 100% BELUM TERCAPAI", "err");
+                }
                 return;
             }
 
-            const confirmed = await openNeuralModal("Withdraw Profit 25% ke Vault?");
-            if(confirmed) {
-                const profitToVault = refBase * 0.25;
-                if(!IS_REAL) {
-                    TOTAL_SECURED_SIM += profitToVault;
-                    SIM_BAL -= profitToVault;
-                    localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
-                } else {
-                    TOTAL_SECURED_REAL += profitToVault;
-                    REAL_BAL -= profitToVault;
-                }
-                proAlert("PROFIT SECURED TO VAULT", "success");
+            // Logic 2: Daily 25% Optional Withdraw
+            if(actualPctGain < 25) {
+                proAlert("TARGET 25% NOT REACHED", "err");
+                return;
             }
 
-            START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
+            const confirmed = await openNeuralModal("Target 25% Tercapai. Tarik ke Vault?");
+            if(!confirmed) {
+                // Jika tidak ditarik, masuk ke saldo utama (Compound)
+                START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
+                localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                addLog("COMPOUND", "25% PROFIT ADDED TO CAPITAL");
+                updateUI();
+                return;
+            }
+            
+            const profitOnly = netProfitIDR;
+            if(profitOnly > 0) {
+                if(!IS_REAL) {
+                    TOTAL_SECURED_SIM += profitOnly;
+                    SIM_BAL -= profitOnly;
+                    localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                    localStorage.setItem('apex_sim_bal', SIM_BAL);
+                } else {
+                    TOTAL_SECURED_REAL += profitOnly;
+                    REAL_BAL -= profitOnly;
+                }
+            }
+
+            START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL); 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
+            
             refreshHistory();
             updateUI();
+            addLog("SYSTEM", "DAILY_PROFIT_SECURED_TO_VAULT");
+        }
+
+        function neuralChronosWatcher() {
+            const now = Date.now();
+            const currentDateString = new Date().toLocaleDateString();
+            
+            if (currentDateString !== LAST_CHECKED_DATE) {
+                LAST_CHECKED_DATE = currentDateString;
+                localStorage.setItem('apex_last_date', LAST_CHECKED_DATE);
+                
+                // On New Day, reset START_BAL_DAY to current balance if Buffer is NOT Active
+                if (!BUFFER_ACTIVE_STATUS) {
+                    START_BAL_DAY = IS_REAL ? REAL_BAL : SIM_BAL;
+                    localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                }
+                
+                addLog("SYSTEM", "NEW_BLOCKCHAIN_DAY");
+            }
+
+            // Logic 3: 30 Days Cycle Rule
+            if (now >= LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) {
+                if (BUFFER_ACTIVE_STATUS) {
+                    // Jika 30 hari tapi tidak capai 100%, hangus & masuk buffer mode
+                    BUFFER_ACTIVE_STATUS = false;
+                    localStorage.setItem('apex_buffer_active', false);
+                    START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
+                    localStorage.setItem('apex_start_bal', START_BAL_DAY);
+                    addLog("SYSTEM", "BUFFER CYCLE EXPIRED - MODE SWITCH");
+                }
+                LAST_BUFFER_CYCLE = now;
+                localStorage.setItem('apex_last_buffer_cycle', LAST_BUFFER_CYCLE);
+            }
+
+            if (BUFFER_ACTIVE_STATUS) {
+                const timeLeft = (LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) - now;
+                const days = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
+                const hrs = Math.floor((timeLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const mins = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+                const secs = Math.floor((timeLeft % (60 * 1000)) / 1000);
+                document.getElementById('buffer_countdown').innerText = `Reset: ${days}d ${hrs}:${mins}:${secs}`;
+            } else {
+                document.getElementById('buffer_countdown').innerText = "Buffer: Standby";
+            }
         }
 
         function updateUI() { 
@@ -856,125 +957,96 @@
             document.getElementById('m_bal_idr').innerText = "RP " + formatVisualIDR(b);
             document.getElementById('vault_total').innerText = (v/KURS_SOL_IDR).toFixed(4) + " SOL";
             document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
+            document.getElementById('mode_tag').innerText = IS_REAL ? "REAL MODE" : "SIMULATION";
             
-            // LOCKED BALANCE DISPLAY (SESUAI REQUEST: LOCKED BALANCE SECTION)
-            document.getElementById('locked_val_sol').innerText = (START_BAL_DAY/KURS_SOL_IDR).toFixed(4) + " SOL";
-            document.getElementById('locked_val_idr').innerText = "RP " + formatVisualIDR(START_BAL_DAY);
-
+            // Target Pct Calculation
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
+            const pctDisplay = Math.min(100, Math.max(0, actualPctGain)).toFixed(2);
             
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
-            document.getElementById('target_stat').innerText = `${actualPctGain.toFixed(2)}% / 25.00%`;
+            document.getElementById('target_stat').innerText = `${pctDisplay}% / 25%`;
 
-            // BUFFER UI SWITCH
-            const bufferText = document.getElementById('buffer_blink_text');
-            const bufferIcon = document.getElementById('buffer_type_icon');
-            if(BUFFER_ACTIVE_STATUS) {
-                bufferText.innerText = "BUFFER ACTIVE";
-                bufferIcon.className = "fa-solid fa-shield-virus buffer-blink-icon";
-            } else {
-                bufferText.innerText = "BUFFER MODE";
-                bufferIcon.className = "fa-solid fa-recycle buffer-blink-icon text-green-400";
-            }
+            // BUFFER MASTER PROGRESS (Toward 100%)
+            const bufferRefBase = ALLOCATED_CAPITAL;
+            const bufferNetProfit = b - bufferRefBase;
+            const bufferPct = (bufferNetProfit / bufferRefBase) * 100;
+            document.getElementById('buffer_master_fill').style.width = Math.min(100, Math.max(0, bufferPct)) + "%";
 
-            // UPDATE HARIAN LOCK LOGIC: BERKEDIP JIKA TERPACHAI
             const updateBtn = document.getElementById('daily_update_btn');
-            if(actualPctGain >= 25) {
-                updateBtn.classList.remove('daily-locked');
+            const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
+            
+            // Update Harian muncul jika target 25% atau 100% Buffer tercapai
+            if (actualPctGain >= (BUFFER_ACTIVE_STATUS ? 100 : 25) && activeCount === 0) {
+                updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('animate__animated', 'animate__flash', 'animate__infinite');
             } else {
-                updateBtn.classList.add('daily-locked');
-                updateBtn.classList.remove('animate__animated', 'animate__flash', 'animate__infinite');
+                updateBtn.classList.add('btn-disabled');
+                updateBtn.classList.remove('animate__flash');
             }
 
-            // MSP LOGIC
-            const bufferPct = (netProfitIDR / ALLOCATED_CAPITAL) * 100;
             const manualSecBtn = document.getElementById('manual_security_btn');
+            const bufferIcon = document.getElementById('buffer_icon_container');
+
+            // Panen 50% Aktif jika di Buffer Mode (Compound) dan akumulasi capai 100%
             if (!BUFFER_ACTIVE_STATUS && !MSP_USED_IN_CYCLE && bufferPct >= 100) {
                 manualSecBtn.classList.remove('btn-disabled');
                 manualSecBtn.classList.add('msp-active-glow');
-                manualSecBtn.innerText = "Manual Security Profit (Active)";
+                manualSecBtn.innerText = "Security Profit (Panen 50% Active)";
             } else {
                 manualSecBtn.classList.add('btn-disabled');
-                manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "MSP COMPLETED" : "Manual Security Profit (Locked)";
+                manualSecBtn.classList.remove('msp-active-glow');
+                manualSecBtn.innerText = MSP_USED_IN_CYCLE ? "Harvest Completed" : "Security Profit (Locked)";
+            }
+
+            if (BUFFER_ACTIVE_STATUS) {
+                bufferIcon.classList.remove('hidden');
+            } else {
+                bufferIcon.classList.add('hidden');
             }
         }
 
-        function refreshHistory() {
-            const list = document.getElementById('backtest_list'); list.innerHTML = "";
-            let netTotalSOL = 0;
-            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
-            const filteredHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
-            
-            filteredHistory.forEach(h => {
-                const solNet = h.net/KURS_SOL_IDR;
-                netTotalSOL += solNet;
-                const c = document.createElement('div'); 
-                c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
-                c.innerHTML = `
-                    <div style="flex: 1.2;">
-                        <span class="ledger-stamp ${h.mode === 'REAL' ? 'stamp-real' : 'stamp-sim'}">${h.mode}</span>
-                        <p class="text-[10px] text-white font-bold inline">${h.sym}/SOL</p>
-                        <p class="text-[6px] text-white/40 uppercase mt-1">${h.date} ${h.time}</p>
-                    </div>
-                    <div style="flex: 1; text-align: right;">
-                        <p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${solNet.toFixed(6)} SOL</p>
-                        <p class="text-[5px] text-white/40">RP ${formatVisualIDR(h.net)}</p>
-                    </div>`;
-                list.appendChild(c);
-            });
-            document.getElementById('bt_total').innerText = filteredHistory.length;
-            document.getElementById('bt_profit').innerText = netTotalSOL.toFixed(6);
-            document.getElementById('bt_profit_idr_footer').innerText = "RP " + formatVisualIDR(netTotalSOL * KURS_SOL_IDR);
-        }
-
-        function updateNeuralClock() {
-            setInterval(() => {
-                const n = new Date();
-                document.getElementById('clock_time').innerText = n.toLocaleTimeString('en-GB');
-                document.getElementById('clock_date').innerText = n.toLocaleDateString('id-ID', { weekday:'short', day:'2-digit', month:'short', year:'numeric' }).toUpperCase();
-            }, 1000);
-        }
-
-        function checkDailyTarget() { 
-            const b = IS_REAL ? REAL_BAL : SIM_BAL;
-            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
-            return ((b - refBase) / refBase * 100) >= 25 && !BUFFER_ACTIVE_STATUS;
-        }
-
-        function neuralChronosWatcher() {
-            const now = Date.now();
-            if (now >= LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) {
-                if (BUFFER_ACTIVE_STATUS) {
-                    BUFFER_ACTIVE_STATUS = false;
-                    localStorage.setItem('apex_buffer_active', false);
-                    START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL);
-                    localStorage.setItem('apex_start_bal', START_BAL_DAY);
-                }
-                LAST_BUFFER_CYCLE = now;
-                localStorage.setItem('apex_last_buffer_cycle', LAST_BUFFER_CYCLE);
+        function toggleMode() {
+            if(!IS_REAL) {
+                document.getElementById('real_auth_modal').classList.remove('hidden');
+            } else { 
+                IS_REAL = false; 
+                REAL_BAL = 0;
+                TOTAL_SECURED_REAL = 0;
+                syncSimulationWithReal(false);
             }
         }
 
-        async function secureToVault() {
-            if(BUFFER_ACTIVE_STATUS || MSP_USED_IN_CYCLE) return;
-            const b = IS_REAL ? REAL_BAL : SIM_BAL;
-            const withdrawAmt = b - ALLOCATED_CAPITAL;
-            if (withdrawAmt < ALLOCATED_CAPITAL) return;
-            
-            const confirmed = await openNeuralModal(`Panen 50% Profit Compound?`);
-            if(confirmed) {
-                const half = withdrawAmt * 0.5;
-                if (IS_REAL) { TOTAL_SECURED_REAL += half; REAL_BAL -= half; } 
-                else { TOTAL_SECURED_SIM += half; SIM_BAL -= half; localStorage.setItem('apex_sim_bal', SIM_BAL); localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); }
-                MSP_USED_IN_CYCLE = true; localStorage.setItem('apex_msp_used', true);
-                updateUI();
+        async function confirmRealMode() {
+            const key = document.getElementById('popup_m_key').value.trim();
+            const secret = document.getElementById('popup_m_cold').value.trim();
+            const btn = document.getElementById('establish_btn');
+            if(!key || key.length < 32) { proAlert("INVALID VAULT ADDRESS", "err"); return; }
+            if(!secret || secret.length < 64) { proAlert("INVALID TRADE PRIVATE KEY", "err"); return; }
+            btn.innerText = "LINKING PHANTOM...";
+            btn.classList.add('btn-disabled');
+            try {
+                API_KEY = key; SECRET_KEY = secret; 
+                const conn = await getSolanaConnection();
+                const pubKey = new solanaWeb3.PublicKey(key);
+                const lamports = await conn.getBalance(pubKey);
+                REAL_BAL = (lamports / solanaWeb3.LAMPORTS_PER_SOL) * KURS_SOL_IDR;
+                cancelRealMode();
+                IS_REAL = true; 
+                syncSimulationWithReal(true);
+                triggerVirtualModal();
+                proAlert("PHANTOM LINKED: REAL MODE ACTIVE", "success");
+            } catch (e) {
+                proAlert("RPC CONNECTION FAILED", "err");
+                btn.innerText = "Connect to Raydium LP";
+                btn.classList.remove('btn-disabled');
             }
         }
 
+        function cancelRealMode() { document.getElementById('real_auth_modal').classList.add('hidden'); }
         function formatVisualIDR(v) { return new Intl.NumberFormat('id-ID').format(Math.floor(v)); }
+        
         function syncFromIdr() { 
             let input = document.getElementById('input_idr');
             let v = input.value.replace(/\D/g, ""); 
@@ -983,6 +1055,7 @@
                 document.getElementById('convert_preview_main').innerText = `Convert: ${(parseInt(v)/KURS_SOL_IDR).toFixed(4)} SOL`;
             }
         }
+
         function syncFromIdrCustom(id) {
             let input = document.getElementById(id);
             let v = input.value.replace(/\D/g, "");
@@ -991,14 +1064,20 @@
                 document.getElementById('convert_preview_alloc').innerText = `EST: ${(parseInt(v)/KURS_SOL_IDR).toFixed(4)} SOL`;
             }
         }
+        
         function applyPct(p, el) {
-            // JIKA SNIPER AKTIF, TOMBOL PERSENTASE TIDAK BISA DIKLIK
-            if(IS_SNIPER_MODE) return;
+            document.getElementById('compound_btn').classList.remove('pct-active');
+            document.getElementById('compound_indicator').classList.add('hidden');
+            IS_AUTO_COMPOUND = false;
+            localStorage.setItem('apex_auto_comp', false);
+            const input = document.getElementById('input_idr');
+            const b = ALLOCATED_CAPITAL || (IS_REAL ? REAL_BAL : SIM_BAL);
             document.querySelectorAll('.pct-btn').forEach(btn => btn.classList.remove('pct-active'));
             el.classList.add('pct-active');
-            document.getElementById('input_idr').value = formatVisualIDR(ALLOCATED_CAPITAL * p);
+            input.value = formatVisualIDR(b * p);
             syncFromIdr();
         }
+
         function addLog(t, m) { const l = document.getElementById('logs'); const d = document.createElement('div'); d.innerHTML = `<span class="text-cyan-400">[${t}]</span> ${m}`; l.prepend(d); }
         function proAlert(m, t) { 
             const c = document.getElementById('pro_toast_container'); 
@@ -1008,20 +1087,84 @@
             c.appendChild(to); 
             setTimeout(() => to.remove(), 3000); 
         }
-        function toggleMode() {
-            if(!IS_REAL) { document.getElementById('real_auth_modal').classList.remove('hidden'); } 
-            else { IS_REAL = false; syncSimulationWithReal(false); }
+        function updateNeuralClock() { setInterval(() => { document.getElementById('neural_clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000); }
+        
+        function checkDailyTarget() { 
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            const netProfitIDR = b - refBase;
+            const actualPctGain = (netProfitIDR / refBase) * 100;
+
+            const compoundIndicator = document.getElementById('compound_indicator');
+            if (IS_AUTO_COMPOUND) {
+                if (BUFFER_ACTIVE_STATUS) {
+                    compoundIndicator.innerHTML = '<i class="fa-solid fa-shield-halved text-yellow-500"></i> Buffer Mode';
+                    compoundIndicator.classList.add('buffer-mode');
+                } else {
+                    compoundIndicator.innerHTML = '<i class="fa-solid fa-recycle animate-spin"></i> Auto-Comp';
+                    compoundIndicator.classList.remove('buffer-mode');
+                }
+            }
+            return actualPctGain >= 25 && !BUFFER_ACTIVE_STATUS;
         }
+
+        function refreshHistory() {
+            const list = document.getElementById('backtest_list'); list.innerHTML = "";
+            let netTotalIDR = 0;
+            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
+            const filteredHistory = SIM_HISTORY.filter(h => h.mode === currentModeKey);
+            
+            filteredHistory.forEach(h => {
+                netTotalIDR += h.net;
+                const c = document.createElement('div'); 
+                const stampClass = h.mode === 'REAL' ? 'stamp-real' : 'stamp-sim';
+                const stampLabel = h.mode === 'REAL' ? 'REAL' : 'SIMULASI';
+                c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
+                c.innerHTML = `
+                    <div style="flex: 1.2;">
+                        <span class="ledger-stamp ${stampClass}">${stampLabel}</span>
+                        <p class="text-[10px] text-white font-bold inline">${h.sym}/SOL</p>
+                        <p class="text-[6px] text-white/40 uppercase mt-1">${h.date} ${h.time}</p>
+                    </div>
+                    <div style="flex: 0.8; text-align: center;"><p class="text-[11px] ${h.roi>=0?'text-green-400':'text-red-500'} font-black">${h.roi}%</p></div>
+                    <div style="flex: 1; text-align: right;"><p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(4)} SOL</p></div>`;
+                list.appendChild(c);
+            });
+            document.getElementById('bt_total').innerText = filteredHistory.length;
+            document.getElementById('bt_profit').innerText = (netTotalIDR/KURS_SOL_IDR).toFixed(4) + " SOL";
+            updateUI(); 
+        }
+
         function openBacktest() { document.getElementById('backtest_modal').style.display = 'block'; refreshHistory(); }
         function closeBacktest() { document.getElementById('backtest_modal').style.display = 'none'; }
-        async function confirmRealMode() {
-            const key = document.getElementById('popup_m_key').value.trim();
-            const secret = document.getElementById('popup_m_cold').value.trim();
-            if(!key || secret.length < 64) { proAlert("INVALID KEYS", "err"); return; }
-            API_KEY = key; SECRET_KEY = secret; IS_REAL = true; 
-            cancelRealMode(); syncSimulationWithReal(true);
+        
+        async function secureToVault() {
+            if(BUFFER_ACTIVE_STATUS) { proAlert("BUFFER ACTIVE: SECURITY LOCKED", "err"); return; }
+            if(MSP_USED_IN_CYCLE) { proAlert("MSP ALREADY USED THIS CYCLE", "err"); return; }
+            
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const bufferRefBase = ALLOCATED_CAPITAL;
+            const bufferNetProfit = b - bufferRefBase;
+            
+            if (bufferNetProfit < bufferRefBase) { proAlert("AKUMULASI 100% BELUM TERCAPAI", "err"); return; }
+            
+            const withdrawAmt = bufferNetProfit * 0.5; // Panen 50% Profit
+            const confirmed = await openNeuralModal(`Panen 50% Profit Compound (${(withdrawAmt/KURS_SOL_IDR).toFixed(4)} SOL)?`);
+            
+            if(confirmed) {
+                if (IS_REAL) { TOTAL_SECURED_REAL += withdrawAmt; REAL_BAL -= withdrawAmt; } 
+                else { 
+                    TOTAL_SECURED_SIM += withdrawAmt; 
+                    SIM_BAL -= withdrawAmt; 
+                    localStorage.setItem('apex_sim_bal', SIM_BAL); 
+                    localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM); 
+                }
+                MSP_USED_IN_CYCLE = true; 
+                localStorage.setItem('apex_msp_used', true);
+                addLog("HARVEST", `SECURITY PROFIT: 50% SECURED`);
+                updateUI(); 
+            }
         }
-        function cancelRealMode() { document.getElementById('real_auth_modal').classList.add('hidden'); }
     </script>
 </body>
 </html>
