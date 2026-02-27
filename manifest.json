@@ -1,18 +1,17 @@
 {
-  "name": "APEX GHOST SOLANA",
+  "name": "APEX GHOST V24",
   "short_name": "APEX GHOST",
-  "description": "Layer 4 Solana Trading Interface",
+  "description": "Omni Ghost Layer 4 Solana Pulse",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#020408",
-  "theme_color": "#020408",
+  "theme_color": "#14f195",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2589/2589313.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
 }
-
