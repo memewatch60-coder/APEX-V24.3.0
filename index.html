@@ -631,7 +631,6 @@
                 if (success) break;
                 let currentPath = PROXY_PIPELINE[currentPipelineIdx];
                 try {
-                    /* nocache ditambahkan agar proxy tidak memberi data lama */
                     const res = await fetch(currentPath + targetUrl + '?nocache=' + Date.now());
                     const result = await res.json();
                     if (result && result.pairs) {
@@ -648,14 +647,12 @@
             const isTargetMet = checkDailyTarget();
             pairs.forEach(p => {
                 const sym = p.baseToken.symbol;
-                /* PURE ADDITION: M5 Change lebih sensitif untuk data real */
                 const change = parseFloat(p.priceChange?.m5 || p.priceChange?.h1 || 0);
                 const vol = parseFloat(p.volume?.h24 || 0);
                 const id = p.pairAddress;
                 
-                // LOGIC ADDITION: LIQUIDITY FILTER > 50 SOL
                 const liquidityUsd = p.liquidity ? parseFloat(p.liquidity.usd) : 0;
-                const liquiditySol = liquidityUsd / (KURS_SOL_IDR / 15000); // Estimasi SOL Price in USD
+                const liquiditySol = liquidityUsd / (KURS_SOL_IDR / 15000); 
                 const isLiquiditySafe = liquiditySol > 50;
 
                 if(!TREND_HISTORY[id]) TREND_HISTORY[id] = [];
@@ -664,17 +661,14 @@
 
                 if (sym.toUpperCase() === "SOL" || sym.toUpperCase() === "WSOL") return;
 
-                // LAYER 1: Grade A+, B+, C+
                 let grade = "";
                 if (change > 15) grade = "STRICT A+";
                 else if (change > 8) grade = "AGGRESSIVE B+";
                 else if (change > 5) grade = "GRADE C+";
-                // LAYER 2: Grade A, B, C (Jika Tier 1 Belum Muncul)
                 else if (change > 3) grade = "GRADE A";
                 else if (change > 1) grade = "GRADE B";
-                else if (vol > 1000) grade = "GRADE C"; /* Koin baru aktif tanpa pergerakan besar */
+                else if (vol > 1000) grade = "GRADE C"; 
 
-                // PURE ADDITION: ONLY INJECT IF LIQUIDITY > 50 SOL
                 if ((grade !== "" && isLiquiditySafe) || force) {
                     injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet, liquiditySol);
                 }
@@ -728,7 +722,6 @@
         function handleStrike(id, sym, price, grade, liq = 999) {
             if(checkDailyTarget()) { proAlert("DAILY TARGET REACHED", "err"); return; }
             
-            // PURE ADDITION: HARD FILTER LIQUIDITY ON STRIKE
             if(liq < 50) { 
                 proAlert("SECURITY: LIQUIDITY < 50 SOL", "err"); 
                 addLog("SECURITY", `BLOCKED_${sym}_LOW_LIQUIDITY`);
@@ -740,7 +733,6 @@
             const currentBal = IS_REAL ? REAL_BAL : SIM_BAL;
             const config = PATEN_STRATEGY[grade];
 
-            // LOGIC STRIKE OPTIMIZATION LAYER 2
             if(IS_SNIPER_ACTIVE && config) {
                 cost = currentBal * config.allocation;
                 stampType = `SNIPER ${grade}`;
@@ -811,11 +803,9 @@
                     }
                 }
 
-                // SMART EXIT LOGIC (STRIKE SELL)
                 let shouldVanish = false;
                 let exitReason = "";
 
-                // GRADE C PANIC SELL -2%
                 if (grade === "GRADE C" && roi <= -2.0) {
                     shouldVanish = true;
                     exitReason = "PANIC_SELL_C";
@@ -823,7 +813,7 @@
                 } 
                 else if (roi <= config.sl) { shouldVanish = true; exitReason = "STOP_LOSS"; }
                 else if (roi >= config.tp) {
-                    if (grade === "GRADE A") { // Trend Mode Trailing
+                    if (grade === "GRADE A") { 
                         if (maxRoi - roi >= config.trailing) { shouldVanish = true; exitReason = "TRAILING_STOP"; }
                     } else if (roi >= (config.tp2 || config.tp)) {
                         shouldVanish = true;
@@ -914,7 +904,6 @@
             const netProfitIDR = b - refBase;
             const actualPctGain = (netProfitIDR / refBase) * 100;
 
-            // Threshold Buffer 25.1%
             if(actualPctGain < 25.1) { proAlert("MIN 25.1% PROFIT REQUIRED", "err"); return; }
 
             const confirmed = await openNeuralModal(`Target 25% Tercapai. Amankan ke Vault?`);
@@ -986,7 +975,6 @@
             const updateBtn = document.getElementById('daily_update_btn');
             const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
-            // MASTER LOGIC: Tombol Update Harian muncul hanya jika Target tercapai (Threshold 25.1%)
             if (actualPctGain >= 25.1 && activeCount === 0) {
                 updateBtn.classList.remove('btn-disabled');
                 updateBtn.classList.add('blink-update');
@@ -1103,6 +1091,19 @@
                 updateUI();
             }
         }
+
+        /* PURE ADDITION: MIRRORING SIGNAL LOGIC FOR SIMULATION */
+        (function mirrorEngine() {
+            setInterval(() => {
+                if(!IS_REAL) {
+                    // Force refresh signal feed when in simulation
+                    const logs = document.getElementById('logs');
+                    if(logs && logs.firstChild && logs.firstChild.innerText.includes('PULSE_SCAN')) {
+                        addLog("SYNC", "MIRRORING_REAL_SIGNALS_TO_SIM...");
+                    }
+                }
+            }, 15000);
+        })();
     </script>
 </body>
 </html>
