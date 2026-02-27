@@ -52,6 +52,11 @@
         .grade-b-l2 { border: 2px solid #f59e0b !important; background: rgba(245, 158, 11, 0.05) !important; }
         .grade-c-l2 { border: 2px solid #ff003c !important; background: rgba(255, 0, 60, 0.05) !important; }
 
+        /* LAYER 3 VISUAL INTEGRATION (DASHED) */
+        .grade-a-minus { border: 2px dashed #d4af37 !important; background: rgba(212, 175, 55, 0.05) !important; }
+        .grade-b-minus { border: 2px dashed #14f195 !important; background: rgba(20, 241, 149, 0.05) !important; }
+        .grade-c-minus { border: 2px dashed #9945ff !important; background: rgba(153, 69, 255, 0.05) !important; }
+
         .trailing-active { border: 2px solid var(--gold) !important; box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
         .dump-alert { border: 2px solid var(--red) !important; animation: shake 0.5s infinite; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
@@ -419,7 +424,11 @@
             // LAYER 2 LOGIC
             "GRADE A": { allocation: 0.20, tp: 20.0, sl: -10.0, trailing: 2.0, mode: "TREND", priority: 3 },
             "GRADE B": { allocation: 0.10, tp: 15.0, sl: -5.0, trailing: 1.5, mode: "SCALPING", priority: 2 },
-            "GRADE C": { allocation: 0.05, tp: 5.0, sl: -2.0, trailing: 0.5, mode: "PANIC", priority: 1 }
+            "GRADE C": { allocation: 0.05, tp: 5.0, sl: -2.0, trailing: 0.5, mode: "PANIC", priority: 1 },
+            // LAYER 3 MICRO-LIQUIDITY (10-20 SOL)
+            "GRADE A-": { allocation: 0.10, tp: 15.0, sl: -3.0, priority: 0.5 },
+            "GRADE B-": { allocation: 0.05, tp: 15.0, sl: -3.0, priority: 0.4 },
+            "GRADE C-": { allocation: 0.02, tp: 15.0, sl: -3.0, priority: 0.3 }
         };
 
         let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || MODAL_DASAR;
@@ -653,7 +662,10 @@
                 
                 const liquidityUsd = p.liquidity ? parseFloat(p.liquidity.usd) : 0;
                 const liquiditySol = liquidityUsd / (KURS_SOL_IDR / 15000); 
-                const isLiquiditySafe = liquiditySol > 50;
+                
+                // LOGIC INTEGRATION: LAYER 3 MICRO-LIQUIDITY DETECTION (10-20 SOL)
+                let isLiquiditySafe = liquiditySol > 50;
+                let isMicroLiquidity = liquiditySol >= 10 && liquiditySol <= 20;
 
                 if(!TREND_HISTORY[id]) TREND_HISTORY[id] = [];
                 TREND_HISTORY[id].push(change);
@@ -662,14 +674,23 @@
                 if (sym.toUpperCase() === "SOL" || sym.toUpperCase() === "WSOL") return;
 
                 let grade = "";
-                if (change > 15) grade = "STRICT A+";
-                else if (change > 8) grade = "AGGRESSIVE B+";
-                else if (change > 5) grade = "GRADE C+";
-                else if (change > 3) grade = "GRADE A";
-                else if (change > 1) grade = "GRADE B";
-                else if (vol > 1000) grade = "GRADE C"; 
+                // STANDARD GRADING (LIQ > 50)
+                if (isLiquiditySafe) {
+                    if (change > 15) grade = "STRICT A+";
+                    else if (change > 8) grade = "AGGRESSIVE B+";
+                    else if (change > 5) grade = "GRADE C+";
+                    else if (change > 3) grade = "GRADE A";
+                    else if (change > 1) grade = "GRADE B";
+                    else if (vol > 1000) grade = "GRADE C"; 
+                } 
+                // LAYER 3 MICRO-LIQUIDITY GRADING (LIQ 10-20 SOL)
+                else if (isMicroLiquidity) {
+                    if (change > 10) grade = "GRADE A-";
+                    else if (change > 5) grade = "GRADE B-";
+                    else grade = "GRADE C-";
+                }
 
-                if ((grade !== "" && isLiquiditySafe) || force) {
+                if ((grade !== "" && (isLiquiditySafe || isMicroLiquidity)) || force) {
                     injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet, liquiditySol);
                 }
             });
@@ -699,6 +720,10 @@
             else if(grade === "GRADE A") gClass = "grade-a-l2";
             else if(grade === "GRADE B") gClass = "grade-b-l2";
             else if(grade === "GRADE C") gClass = "grade-c-l2";
+            // VISUAL LAYER 3: DASHED STYLE
+            else if(grade === "GRADE A-") gClass = "grade-a-minus";
+            else if(grade === "GRADE B-") gClass = "grade-b-minus";
+            else if(grade === "GRADE C-") gClass = "grade-c-minus";
 
             div.className = `card-base mb-2 animate__animated animate__fadeInLeft ${gClass} ${isTargetMet ? 'signal-locked' : ''}`;
             div.innerHTML = `
@@ -707,7 +732,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[7px] text-green-400 font-black pct-value-tag">${change}%</p>
-                        <h3 class="text-sm font-black italic text-white">${sym}/SOL</h3>
+                        <h3 class="text-sm font-black italic text-white">${sym}/SOL ${grade.includes('-') ? '<i class="fa-solid fa-microchip text-[6px] text-yellow-500"></i>' : ''}</h3>
                         <p class="text-[6px] text-cyan-400 font-bold uppercase">Liq: ${liq.toFixed(1)} SOL</p>
                         <div class="trend-line-container">${history.map((h, i) => `<div class="trend-bar" style="height: ${Math.max(15, Math.min(100, Math.abs(h)*5))}%"></div>`).join('')}</div>
                     </div>
@@ -722,7 +747,8 @@
         function handleStrike(id, sym, price, grade, liq = 999) {
             if(checkDailyTarget()) { proAlert("DAILY TARGET REACHED", "err"); return; }
             
-            if(liq < 50) { 
+            // Logic Integration: allow strike for Layer 3 (10-20 SOL)
+            if(liq < 50 && !(liq >= 10 && liq <= 20)) { 
                 proAlert("SECURITY: LIQUIDITY < 50 SOL", "err"); 
                 addLog("SECURITY", `BLOCKED_${sym}_LOW_LIQUIDITY`);
                 return; 
@@ -764,7 +790,11 @@
             if(document.getElementById(`active_${id}`)) return;
             const div = document.createElement('div'); div.id = `active_${id}`;
             div.setAttribute('onclick', `manualVanish('${id}', '${sym}', ${cost}, '${grade}')`);
-            div.className = `card-base mb-2 border-2 border-cyan-500 bg-[#0d0f14] animate__animated animate__pulse animate__infinite clickable-card relative`;
+            
+            let gClass = "border-cyan-500";
+            if(grade.includes('-')) gClass = "border-yellow-500 border-dashed";
+
+            div.className = `card-base mb-2 border-2 ${gClass} bg-[#0d0f14] animate__animated animate__pulse animate__infinite clickable-card relative`;
             div.innerHTML = `
                 <div class="flex justify-between items-center"><span class="text-[7px] text-yellow-500 font-black">${grade}</span><span class="text-[6px] text-red-500 animate-pulse font-black">SOL-LIVE</span></div>
                 <h3 class="text-[11px] font-black text-white italic">${sym}/SOL</h3>
@@ -806,18 +836,26 @@
                 let shouldVanish = false;
                 let exitReason = "";
 
-                if (grade === "GRADE C" && roi <= -2.0) {
-                    shouldVanish = true;
-                    exitReason = "PANIC_SELL_C";
-                    new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+                // AUTO-EXIT AGGRESIF (LAYER 3: 10-20 SOL)
+                if (grade.includes('-')) {
+                    if (roi >= 15.0) { shouldVanish = true; exitReason = "AUTO_EXIT_15PCT"; }
+                    else if (roi <= -3.0) { shouldVanish = true; exitReason = "AUTO_EXIT_MIN3PCT"; }
                 } 
-                else if (roi <= config.sl) { shouldVanish = true; exitReason = "STOP_LOSS"; }
-                else if (roi >= config.tp) {
-                    if (grade === "GRADE A") { 
-                        if (maxRoi - roi >= config.trailing) { shouldVanish = true; exitReason = "TRAILING_STOP"; }
-                    } else if (roi >= (config.tp2 || config.tp)) {
+                // STANDARD STRATEGY
+                else {
+                    if (grade === "GRADE C" && roi <= -2.0) {
                         shouldVanish = true;
-                        exitReason = "TAKE_PROFIT";
+                        exitReason = "PANIC_SELL_C";
+                        new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+                    } 
+                    else if (roi <= config.sl) { shouldVanish = true; exitReason = "STOP_LOSS"; }
+                    else if (roi >= config.tp) {
+                        if (grade === "GRADE A") { 
+                            if (maxRoi - roi >= config.trailing) { shouldVanish = true; exitReason = "TRAILING_STOP"; }
+                        } else if (roi >= (config.tp2 || config.tp)) {
+                            shouldVanish = true;
+                            exitReason = "TAKE_PROFIT";
+                        }
                     }
                 }
 
