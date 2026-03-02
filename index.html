@@ -47,15 +47,17 @@
         .grade-b-card { border: 2px solid #14f195 !important; background: linear-gradient(135deg, #0a1a0e 0%, #000 100%) !important; }
         .grade-c-card { border: 2px solid #9945ff !important; background: linear-gradient(135deg, #120a1a 0%, #000 100%) !important; }
         
-        /* LAYER 2 GRADE STYLING */
         .grade-a-l2 { border: 2px solid #00c2ff !important; background: rgba(0, 194, 255, 0.05) !important; }
         .grade-b-l2 { border: 2px solid #f59e0b !important; background: rgba(245, 158, 11, 0.05) !important; }
         .grade-c-l2 { border: 2px solid #ff003c !important; background: rgba(255, 0, 60, 0.05) !important; }
 
-        /* LAYER 3 VISUAL INTEGRATION (DASHED) */
         .grade-a-minus { border: 2px dashed #d4af37 !important; background: rgba(212, 175, 55, 0.05) !important; }
         .grade-b-minus { border: 2px dashed #14f195 !important; background: rgba(20, 241, 149, 0.05) !important; }
         .grade-c-minus { border: 2px dashed #9945ff !important; background: rgba(153, 69, 255, 0.05) !important; }
+
+        /* LAYER 4 MOONSHOOT STYLING */
+        .grade-moonshoot { border: 2px solid #ff003c !important; background: radial-gradient(circle at center, #2a0a0a 0%, #000 100%) !important; box-shadow: 0 0 20px rgba(255, 0, 60, 0.4) !important; animation: moonshoot-pulse 1.5s infinite alternate; }
+        @keyframes moonshoot-pulse { from { box-shadow: 0 0 10px rgba(255, 0, 60, 0.2); } to { box-shadow: 0 0 30px rgba(255, 0, 60, 0.6); } }
 
         .trailing-active { border: 2px solid var(--gold) !important; box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
         .dump-alert { border: 2px solid var(--red) !important; animation: shake 0.5s infinite; }
@@ -95,7 +97,7 @@
         .trend-danger { background: var(--red) !important; box-shadow: 0 0 10px var(--red); animation: pulse 0.5s infinite; }
 
         .compound-active { border-color: var(--green) !important; box-shadow: 0 0 20px rgba(20, 241, 149, 0.2) !important; }
-        .btn-disabled { opacity: 0.3; pointer-events: none !important; filter: grayscale(1); cursor: not-allowed; }
+        .btn-disabled { display: none !important; pointer-events: none !important; filter: grayscale(1); cursor: not-allowed; }
         .buffer-mode { color: #f59e0b !important; text-shadow: 0 0 5px #f59e0b; }
         .stamp-logic { position: absolute; bottom: 5px; right: 10px; font-size: 6px; font-weight: 900; color: rgba(212, 175, 55, 0.5); font-style: italic; text-transform: uppercase; }
         #manual_security_btn { border: 1px solid var(--neon); color: var(--neon); background: rgba(20, 241, 149, 0.05); }
@@ -118,27 +120,28 @@
         .pct-alloc-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 5px; border-radius: 8px; font-size: 9px; font-weight: 900; color: #14f195; transition: 0.2s; }
         .pct-alloc-btn:active { transform: scale(0.9); background: #14f195; color: #000; }
 
-        /* Logic Additions Styling */
         #buffer_countdown { font-family: 'JetBrains Mono', monospace; font-size: 6px; color: #f59e0b; margin-top: 2px; }
 
-        /* Additional Logic Styling For Ledger */
         .ledger-stamp { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
         .stamp-sim { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); }
         .stamp-real { background: rgba(20, 241, 149, 0.2); color: #14f195; border: 1px solid rgba(20, 241, 149, 0.5); }
 
-        /* Progress Bar Master */
         .progress-container-master { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 4px; overflow: hidden; }
         .progress-fill-buffer { height: 100%; background: linear-gradient(90deg, #f59e0b, #d4af37); box-shadow: 0 0 10px #f59e0b; transition: width 0.5s ease-in-out; }
 
-        /* MASTER NEW STYLING FOR SNIPER & UI SYNC */
         .sniper-badge { position: absolute; bottom: 5px; right: 5px; background: #ff003c; color: white; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 4px; z-index: 20; box-shadow: 0 0 10px #ff003c; }
         .sniper-active-btn { background: #ff003c !important; color: white !important; box-shadow: 0 0 20px #ff003c !important; border-color: #ff003c !important; }
         #locked_initial_balance { font-size: 8px; font-weight: 900; color: var(--gold); background: rgba(212, 175, 55, 0.1); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(212, 175, 55, 0.3); }
         .blink-update { animation: blink-update-anim 0.5s infinite alternate; }
         @keyframes blink-update-anim { from { opacity: 1; background: #ca8a04; } to { opacity: 0.5; background: #eab308; } }
         
-        /* SYNC ADDITION - LOCKED BALANCE DISPLAY */
         #locked_balance_box { font-size: 8px; font-weight: 900; color: #00c2ff; background: rgba(0, 194, 255, 0.1); padding: 4px 8px; border-radius: 8px; border: 1px solid rgba(0, 194, 255, 0.3); margin-right: 4px; display: none; }
+    
+        .social-trust-tag { font-size: 6px; font-weight: 900; background: rgba(255,0,60,0.1); color: #ff003c; border: 1px solid #ff003c; padding: 1px 4px; border-radius: 4px; margin-top: 2px; display: inline-block; }
+        .trust-safe { color: #14f195 !important; border-color: #14f195 !important; background: rgba(20,241,149,0.1) !important; }
+        
+        /* LOGIC ADDITION: ANTI-FOMO UI LOCK */
+        .btn-locked-mode { background: #1e293b !important; color: #64748b !important; border-color: #334155 !important; pointer-events: none !important; box-shadow: none !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -377,7 +380,7 @@
 
     <script>
         const M_PIN = "081241955337";
-        const MODAL_DASAR = 100 * 2500000; // SIMULATION 100 SOL FIX
+        const MODAL_DASAR = 100 * 2500000; 
         let KURS_SOL_IDR = 2500000; 
         
         const HELIUS_RPC_POOL = [
@@ -416,19 +419,17 @@
         ];
         let currentPipelineIdx = 0;
 
-        // LAYER 1 & LAYER 2 STRATEGY
         const PATEN_STRATEGY = {
-            "STRICT A+": { allocation: 0.50, sub_pct: 1.0, tp: 2.0, tp2: 5.0, sl: -0.8, trailing: 0.3, dump_shield: -0.6, priority: 6 },
-            "AGGRESSIVE B+": { allocation: 0.25, sub_pct: 0.5, tp: 4.5, tp2: 10.0, sl: -1.5, trailing: 1.0, dump_shield: -1.0, priority: 5 },
-            "GRADE C+": { allocation: 0.25, sub_pct: 0.1, tp: 5.0, tp2: 15.0, sl: -3.0, trailing: 2.0, dump_shield: -2.0, priority: 4 },
-            // LAYER 2 LOGIC
+            "STRICT A+": { allocation: 0.20, sub_pct: 1.0, tp: 2.0, tp2: 20.0, sl: -10.0, trailing: 2.0, mode: "TREND_STABLE", priority: 6 },
+            "AGGRESSIVE B+": { allocation: 0.10, sub_pct: 0.5, tp: 8.0, tp2: 15.0, sl: -5.0, trailing: 1.5, mode: "SCALPING_BALANCED", priority: 5 },
+            "GRADE C+": { allocation: 0.05, sub_pct: 0.1, tp: 3.0, tp2: 5.0, sl: -2.0, trailing: 0.5, mode: "PANIC_HIGH_RISK", priority: 4 },
             "GRADE A": { allocation: 0.20, tp: 20.0, sl: -10.0, trailing: 2.0, mode: "TREND", priority: 3 },
             "GRADE B": { allocation: 0.10, tp: 15.0, sl: -5.0, trailing: 1.5, mode: "SCALPING", priority: 2 },
             "GRADE C": { allocation: 0.05, tp: 5.0, sl: -2.0, trailing: 0.5, mode: "PANIC", priority: 1 },
-            // LAYER 3 MICRO-LIQUIDITY (10-20 SOL)
-            "GRADE A-": { allocation: 0.10, tp: 15.0, sl: -3.0, priority: 0.5 },
-            "GRADE B-": { allocation: 0.05, tp: 15.0, sl: -3.0, priority: 0.4 },
-            "GRADE C-": { allocation: 0.02, tp: 15.0, sl: -3.0, priority: 0.3 }
+            "GRADE A-": { allocation: 0.10, tp: 15.0, sl: -3.0, autoVanish: 15.0, priority: 0.5 },
+            "GRADE B-": { allocation: 0.05, tp: 15.0, sl: -3.0, autoVanish: 15.0, priority: 0.4 },
+            "GRADE C-": { allocation: 0.02, tp: 15.0, sl: -3.0, autoVanish: 15.0, priority: 0.3 },
+            "MOONSHOOT": { allocation: 0.01, tp: 100.0, tp2: 1000.0, sl: -50.0, trailing: 30.0, mode: "HIGH_RISK_GEMS", priority: 10 }
         };
 
         let SIM_BAL = parseFloat(localStorage.getItem('apex_sim_bal')) || MODAL_DASAR;
@@ -455,6 +456,38 @@
         
         let IS_SNIPER_ACTIVE = false;
         let modalResolve = null;
+
+        /* LOGIC ADDITION: INJECTED ANTI-FOMO & SAFETY BUFFER FUNCTIONS */
+        function checkDailyTarget() {
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            let currentProfitPct = (b - refBase) / refBase * 100;
+            
+            if (currentProfitPct >= 25.0) {
+                // Munculkan tombol Update Harian (via updateUI)
+                // HARD LOCK: Matikan semua akses Entry/Strike
+                document.querySelectorAll('.strike-btn-logic').forEach(btn => {
+                    btn.disabled = true;
+                    btn.innerText = "TARGET REACHED - LOCKED";
+                    btn.classList.add('btn-locked-mode');
+                });
+                return true;
+            }
+            return false;
+        }
+
+        function calculateStakeAmount(initialStake) {
+            const b = IS_REAL ? REAL_BAL : SIM_BAL;
+            let totalGrowth = (b - (ALLOCATED_CAPITAL || START_BAL_DAY)) / (ALLOCATED_CAPITAL || START_BAL_DAY) * 100;
+            
+            // Jika profit belum mencapai 100% dari modal awal, gunakan stake flat (Safety Buffer)
+            if (totalGrowth < 100.0) {
+                return initialStake; 
+            } else {
+                // Jika sudah tembus 100%, baru aktifkan Compounding Logic (misal +2% dari growth)
+                return initialStake * (1 + (totalGrowth/1000));
+            }
+        }
 
         async function updateSolanaPrice() {
             try {
@@ -633,7 +666,6 @@
 
         async function autoScanSolana(force = false) {
             let success = false;
-            /* PURE ADDITION: REAL-TIME BLOCKCHAIN DATA LOGIC */
             let targetUrl = encodeURIComponent('https://api.dexscreener.com/latest-dex/pairs/solana');
             
             for (let i = 0; i < PROXY_PIPELINE.length; i++) {
@@ -659,85 +691,79 @@
                 const change = parseFloat(p.priceChange?.m5 || p.priceChange?.h1 || 0);
                 const vol = parseFloat(p.volume?.h24 || 0);
                 const id = p.pairAddress;
-                
                 const liquidityUsd = p.liquidity ? parseFloat(p.liquidity.usd) : 0;
                 const liquiditySol = liquidityUsd / (KURS_SOL_IDR / 15000); 
-                
-                // LOGIC INTEGRATION: LAYER 3 MICRO-LIQUIDITY DETECTION (10-20 SOL)
-                let isLiquiditySafe = liquiditySol > 50;
-                let isMicroLiquidity = liquiditySol >= 10 && liquiditySol <= 20;
-
-                if(!TREND_HISTORY[id]) TREND_HISTORY[id] = [];
-                TREND_HISTORY[id].push(change);
-                if(TREND_HISTORY[id].length > 10) TREND_HISTORY[id].shift();
+                const mcap = p.fdv || 0;
 
                 if (sym.toUpperCase() === "SOL" || sym.toUpperCase() === "WSOL") return;
 
+                let socialTrustScore = 100;
+                let trustMsg = "TRUSTED SOURCE";
+                if(p.info && p.info.socials) {
+                    if(p.info.socials.length < 2) { socialTrustScore -= 40; trustMsg = "LOW SOCIAL PRESENCE"; }
+                } else { socialTrustScore -= 60; trustMsg = "NO SOCIAL DATA (HIGH RISK)"; }
+                
+                if (p.info?.websites?.length === 0) socialTrustScore -= 30;
+
                 let grade = "";
-                // STANDARD GRADING (LIQ > 50)
-                if (isLiquiditySafe) {
+
+                /* LOGIC LAYER 3: MOONSHOOT (HIGH RISK / NEW) */
+                if (mcap >= 15000 && mcap <= 100000 && vol > 50000 && liquidityUsd > 10000) {
+                    grade = "MOONSHOOT";
+                }
+                /* LOGIC LAYER 2: MID-CAP / TRENDING */
+                else if (liquiditySol >= 10 && liquiditySol <= 25) {
+                    if (change > 10) grade = "GRADE A-";
+                    else if (change > 5) grade = "GRADE B-";
+                    else grade = "GRADE C-";
+                } 
+                /* LOGIC LAYER 1: BLUECHIP / HIGH LIQUIDITY */
+                else if (liquiditySol > 50) {
                     if (change > 15) grade = "STRICT A+";
                     else if (change > 8) grade = "AGGRESSIVE B+";
                     else if (change > 5) grade = "GRADE C+";
                     else if (change > 3) grade = "GRADE A";
                     else if (change > 1) grade = "GRADE B";
-                    else if (vol > 1000) grade = "GRADE C"; 
-                } 
-                // LAYER 3 MICRO-LIQUIDITY GRADING (LIQ 10-20 SOL)
-                else if (isMicroLiquidity) {
-                    if (change > 10) grade = "GRADE A-";
-                    else if (change > 5) grade = "GRADE B-";
-                    else grade = "GRADE C-";
+                    else if (vol > 1000) grade = "GRADE C";
                 }
 
-                if ((grade !== "" && (isLiquiditySafe || isMicroLiquidity)) || force) {
-                    injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet, liquiditySol);
+                if (grade !== "" || force) {
+                    injectSignalSpecific(id, sym, p.priceUsd, grade, change, vol, isTargetMet, liquiditySol, socialTrustScore, trustMsg);
                 }
             });
         }
 
-        function injectSignalSpecific(id, sym, price, grade, change, vol, isTargetMet, liq = 0) {
+        function injectSignalSpecific(id, sym, price, grade, change, vol, isTargetMet, liq = 0, trustScore = 100, trustMsg = "") {
             const history = TREND_HISTORY[id] || [change];
             if(document.getElementById(`signal_${id}`)) {
                 const existing = document.getElementById(`signal_${id}`);
-                const trendBox = existing.querySelector('.trend-line-container');
-                if(trendBox) {
-                    trendBox.innerHTML = history.map((h, i) => {
-                        const localFalling = i > 0 && history[i] < history[i-1];
-                        return `<div class="trend-bar ${localFalling ? 'trend-danger' : ''}" style="height: ${Math.max(15, Math.min(100, Math.abs(h)*5))}%"></div>`;
-                    }).join('');
-                }
                 const pctTag = existing.querySelector('.pct-value-tag');
                 if(pctTag) pctTag.innerText = `${change}%`;
                 if(isTargetMet) existing.classList.add('signal-locked');
                 return;
             }
             const div = document.createElement('div'); div.id = `signal_${id}`;
-            let gClass = "";
+            let gClass = "standard-card";
             if(grade === "STRICT A+") gClass = "grade-a-card";
             else if(grade === "AGGRESSIVE B+") gClass = "grade-b-card";
             else if(grade === "GRADE C+") gClass = "grade-c-card";
-            else if(grade === "GRADE A") gClass = "grade-a-l2";
-            else if(grade === "GRADE B") gClass = "grade-b-l2";
-            else if(grade === "GRADE C") gClass = "grade-c-l2";
-            // VISUAL LAYER 3: DASHED STYLE
             else if(grade === "GRADE A-") gClass = "grade-a-minus";
             else if(grade === "GRADE B-") gClass = "grade-b-minus";
             else if(grade === "GRADE C-") gClass = "grade-c-minus";
+            else if(grade === "MOONSHOOT") gClass = "grade-moonshoot";
 
             div.className = `card-base mb-2 animate__animated animate__fadeInLeft ${gClass} ${isTargetMet ? 'signal-locked' : ''}`;
             div.innerHTML = `
                 ${isTargetMet ? '<div class="locked-badge">TARGET REACHED</div>' : ''}
-                <div style="position:absolute;top:0;right:0;background:${grade.includes('+')?'#d4af37':'#00c2ff'};color:black;font-size:8px;font-weight:900;padding:3px 12px;border-bottom-left-radius:12px;">${grade}</div>
+                <div style="position:absolute;top:0;right:0;background:${grade === 'MOONSHOOT' ? '#ff003c' : (grade.includes('+')?'#d4af37':'#00c2ff')};color:${grade === 'MOONSHOOT' ? 'white' : 'black'};font-size:8px;font-weight:900;padding:3px 12px;border-bottom-left-radius:12px;">${grade}</div>
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[7px] text-green-400 font-black pct-value-tag">${change}%</p>
-                        <h3 class="text-sm font-black italic text-white">${sym}/SOL ${grade.includes('-') ? '<i class="fa-solid fa-microchip text-[6px] text-yellow-500"></i>' : ''}</h3>
+                        <h3 class="text-sm font-black italic text-white">${sym}/SOL ${grade === 'MOONSHOOT' ? '<i class="fa-solid fa-rocket text-[6px] text-red-500"></i>' : (grade.includes('-') ? '<i class="fa-solid fa-microchip text-[6px] text-yellow-500"></i>' : '')}</h3>
                         <p class="text-[6px] text-cyan-400 font-bold uppercase">Liq: ${liq.toFixed(1)} SOL</p>
-                        <div class="trend-line-container">${history.map((h, i) => `<div class="trend-bar" style="height: ${Math.max(15, Math.min(100, Math.abs(h)*5))}%"></div>`).join('')}</div>
+                        <div class="social-trust-tag ${trustScore >= 70 ? 'trust-safe' : ''}">${trustMsg}</div>
                     </div>
                 </div>
-                ${IS_SNIPER_ACTIVE ? '<div class="sniper-badge">SNIPER LAYER ACTIVE</div>' : ''}
                 <button onclick="handleStrike('${id}','${sym}',${price},'${grade}', ${liq})" class="w-full bg-white/5 border border-white/10 py-2 mt-2 rounded-xl font-black text-[9px] text-white/60 uppercase strike-btn-logic">Strike</button>`;
             
             document.getElementById('feed_signal').appendChild(div);
@@ -747,11 +773,8 @@
         function handleStrike(id, sym, price, grade, liq = 999) {
             if(checkDailyTarget()) { proAlert("DAILY TARGET REACHED", "err"); return; }
             
-            // Logic Integration: allow strike for Layer 3 (10-20 SOL)
-            if(liq < 50 && !(liq >= 10 && liq <= 20)) { 
-                proAlert("SECURITY: LIQUIDITY < 50 SOL", "err"); 
-                addLog("SECURITY", `BLOCKED_${sym}_LOW_LIQUIDITY`);
-                return; 
+            if(grade !== "MOONSHOOT" && liq < 50 && !(liq >= 10 && liq <= 25)) { 
+                proAlert("SECURITY: LIQUIDITY < 50 SOL", "err"); return; 
             }
 
             let cost = 0;
@@ -765,14 +788,12 @@
             } else {
                 let costStr = document.getElementById('input_idr').value.replace(/\D/g, "");
                 cost = parseInt(costStr) || 0;
-                if(cost <= 0) {
-                    const activePctBtn = document.querySelector('.pct-btn.pct-active');
-                    if(!activePctBtn) { proAlert("INPUT AMOUNT", "err"); return; }
-                }
             }
+
+            /* LOGIC ADDITION: APPLY SAFETY BUFFER ON COST */
+            cost = calculateStakeAmount(cost);
             
             if (cost > currentBal) { proAlert("Insufficient Balance", "err"); return; }
-            if (cost < (currentBal * 0.01)) { proAlert("Minimal 1% Modal", "err"); return; }
             
             const uniqueStrikeId = id + "_" + Date.now();
             injectActiveCard(uniqueStrikeId, sym, grade, cost, stampType);
@@ -780,7 +801,7 @@
             if(!IS_REAL) { SIM_BAL -= cost; localStorage.setItem('apex_sim_bal', SIM_BAL); } 
             else { REAL_BAL -= cost; }
             
-            ACTIVE_CARDS_DATA[uniqueStrikeId] = { sym, grade, cost, real: IS_REAL, roi: 0, stampType };
+            ACTIVE_CARDS_DATA[uniqueStrikeId] = { sym, grade, cost, real: IS_REAL, roi: 0, stampType, tp1_status: false };
             localStorage.setItem('apex_active_cards', JSON.stringify(ACTIVE_CARDS_DATA));
             startGhostEngine(uniqueStrikeId, sym, cost, grade, IS_REAL);
             updateUI();
@@ -790,17 +811,11 @@
             if(document.getElementById(`active_${id}`)) return;
             const div = document.createElement('div'); div.id = `active_${id}`;
             div.setAttribute('onclick', `manualVanish('${id}', '${sym}', ${cost}, '${grade}')`);
-            
-            let gClass = "border-cyan-500";
-            if(grade.includes('-')) gClass = "border-yellow-500 border-dashed";
-
-            div.className = `card-base mb-2 border-2 ${gClass} bg-[#0d0f14] animate__animated animate__pulse animate__infinite clickable-card relative`;
+            div.className = `card-base mb-2 border-2 ${grade === 'MOONSHOOT' ? 'border-red-500' : (grade.includes('-') ? 'border-dashed border-yellow-500' : 'border-cyan-500')} bg-[#0d0f14] animate__animated animate__pulse animate__infinite clickable-card relative`;
             div.innerHTML = `
-                <div class="flex justify-between items-center"><span class="text-[7px] text-yellow-500 font-black">${grade}</span><span class="text-[6px] text-red-500 animate-pulse font-black">SOL-LIVE</span></div>
+                <div class="flex justify-between items-center"><span class="text-[7px] ${grade === 'MOONSHOOT' ? 'text-red-500' : 'text-yellow-500'} font-black">${grade}</span><span class="text-[6px] text-red-500 animate-pulse font-black">SOL-LIVE</span></div>
                 <h3 class="text-[11px] font-black text-white italic">${sym}/SOL</h3>
                 <div class="flex flex-col items-center py-2"><div id="roi_${id}" class="text-lg font-black text-cyan-400">0.00%</div><div id="roi_val_idr_${id}" class="text-[8px] font-bold text-white/60"> (+0.00 SOL)</div></div>
-                <div class="trend-line-container mb-2" id="trend_strike_${id}"></div>
-                <p class="text-[6px] text-white/40 text-center uppercase mb-1">Entry: ${(cost/KURS_SOL_IDR).toFixed(4)} SOL</p>
                 <div class="sniper-badge">${stampType}</div>`;
             document.getElementById('feed_active').prepend(div);
         }
@@ -809,59 +824,51 @@
             let roi = startRoi;
             let maxRoi = roi; 
             const config = PATEN_STRATEGY[grade] || { tp: 5.0, sl: -2.0, trailing: 1.0 };
-            let localTrend = [0, 0.1, -0.1, 0];
             
             const iv = setInterval(() => {
-                let change = (Math.random() * 1.8 - 0.7); 
+                let change = (Math.random() * 2.0 - 0.8); 
+                if (grade === "MOONSHOOT") { change = (Math.random() * 15.0 - 7.0); }
+                
                 roi += change; 
                 if (roi > maxRoi) maxRoi = roi;
                 
-                localTrend.push(change);
-                if(localTrend.length > 15) localTrend.shift();
-
                 const rDisp = document.getElementById(`roi_${id}`);
-                const rValDisp = document.getElementById(`roi_val_idr_${id}`);
-                const trendDisp = document.getElementById(`trend_strike_${id}`);
-
                 if(rDisp) {
                     rDisp.innerText = roi.toFixed(2) + "%";
                     rDisp.style.color = roi >= 0 ? "#14f195" : "#ff003c";
-                    const profitIDR = Math.floor(cost * (roi / 100));
-                    if(rValDisp) rValDisp.innerText = ` (${profitIDR >= 0 ? '+' : ''}${(profitIDR/KURS_SOL_IDR).toFixed(6)} SOL)`;
-                    if(trendDisp) {
-                        trendDisp.innerHTML = localTrend.map(t => `<div class="trend-bar ${t < 0 ? 'trend-danger' : ''}" style="height: ${Math.max(20, Math.min(100, 50 + (t*40)))}%"></div>`).join('');
-                    }
                 }
 
                 let shouldVanish = false;
                 let exitReason = "";
 
-                // AUTO-EXIT AGGRESIF (LAYER 3: 10-20 SOL)
-                if (grade.includes('-')) {
-                    if (roi >= 15.0) { shouldVanish = true; exitReason = "AUTO_EXIT_15PCT"; }
-                    else if (roi <= -3.0) { shouldVanish = true; exitReason = "AUTO_EXIT_MIN3PCT"; }
+                /* LOGIC LAYER 4: FREE RIDE (TP1 AT 100%) */
+                if (grade === "MOONSHOOT" && roi >= 100 && !ACTIVE_CARDS_DATA[id].tp1_status) {
+                    ACTIVE_CARDS_DATA[id].tp1_status = true;
+                    const initialCost = ACTIVE_CARDS_DATA[id].cost;
+                    if(!real) { SIM_BAL += initialCost; } else { REAL_BAL += initialCost; }
+                    ACTIVE_CARDS_DATA[id].cost = initialCost * 0.5; // Continue with 50% "free" coins
+                    addLog("FREE_RIDE", `${sym} TP1-100% EXECUTED. CAPITAL SECURED.`);
+                    proAlert(`${sym} CAPITAL SECURED!`, "success");
+                    updateUI();
+                }
+
+                if (grade === "GRADE C+" && roi <= -2.0) { 
+                    shouldVanish = true; exitReason = "PANIC_SELL_C+ (-2%)"; 
+                    new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
                 } 
-                // STANDARD STRATEGY
-                else {
-                    if (grade === "GRADE C" && roi <= -2.0) {
-                        shouldVanish = true;
-                        exitReason = "PANIC_SELL_C";
-                        new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
-                    } 
-                    else if (roi <= config.sl) { shouldVanish = true; exitReason = "STOP_LOSS"; }
-                    else if (roi >= config.tp) {
-                        if (grade === "GRADE A") { 
-                            if (maxRoi - roi >= config.trailing) { shouldVanish = true; exitReason = "TRAILING_STOP"; }
-                        } else if (roi >= (config.tp2 || config.tp)) {
-                            shouldVanish = true;
-                            exitReason = "TAKE_PROFIT";
-                        }
-                    }
+                else if (grade.includes('-') && (roi >= 15.0 || roi <= -3.0)) {
+                    shouldVanish = true; exitReason = "MICRO_LIQ_AUTO_EXIT";
+                }
+                else if (roi <= config.sl) { shouldVanish = true; exitReason = "STOP_LOSS"; }
+                else if (roi >= config.tp) {
+                    if (grade.includes('A') || grade === "MOONSHOOT") { 
+                        if (maxRoi - roi >= config.trailing) { shouldVanish = true; exitReason = "TRAILING_STOP"; }
+                    } else { shouldVanish = true; exitReason = "TAKE_PROFIT"; }
                 }
 
                 if (shouldVanish) {
                     clearInterval(iv);
-                    vanishEngine(id, sym, cost, roi, real, grade, exitReason);
+                    vanishEngine(id, sym, ACTIVE_CARDS_DATA[id].cost, roi, real, grade, exitReason);
                 }
             }, 1000);
             ACTIVE_INTERVALS[id] = iv;
@@ -903,11 +910,9 @@
             const historyEntry = { 
                 date: new Date().toLocaleDateString(), 
                 time: new Date().toLocaleTimeString(), 
-                sym, roi: roi.toFixed(2), net: profit, grade, 
-                mode: real ? 'REAL' : 'SIM',
+                sym, roi: roi.toFixed(2), net: profit, grade, mode: real ? 'REAL' : 'SIM',
                 vaultAtTime: (real ? TOTAL_SECURED_REAL : TOTAL_SECURED_SIM),
-                mainAtTime: (real ? REAL_BAL : SIM_BAL),
-                stamp: ACTIVE_CARDS_DATA[id] ? ACTIVE_CARDS_DATA[id].stampType : "GHOST"
+                mainAtTime: (real ? REAL_BAL : SIM_BAL)
             };
             
             SIM_HISTORY.unshift(historyEntry);
@@ -921,68 +926,44 @@
         }
 
         function downloadMonthlyExcel() {
-            if (SIM_HISTORY.length === 0) { proAlert("NO DATA TO EXPORT", "err"); return; }
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "DATE,TIME,PAIR,GRADE,MODE,ROI(%),PROFIT(SOL),VAULT_BALANCE(SOL),MAIN_BALANCE(SOL)\n";
-            SIM_HISTORY.forEach(h => { 
-                csvContent += `${h.date},${h.time},${h.sym},${h.grade},${h.mode},${h.roi}%,${(h.net/KURS_SOL_IDR).toFixed(6)},${(h.vaultAtTime/KURS_SOL_IDR).toFixed(4)},${(h.mainAtTime/KURS_SOL_IDR).toFixed(4)}\n`; 
-            });
+            let csvContent = "data:text/csv;charset=utf-8,DATE,TIME,PAIR,ROI(%),PROFIT(SOL)\n";
+            SIM_HISTORY.forEach(h => { csvContent += `${h.date},${h.time},${h.sym},${h.roi}%,${(h.net/KURS_SOL_IDR).toFixed(6)}\n`; });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `APEX_LEDGER_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            link.setAttribute("download", "APEX_LEDGER.csv");
+            document.body.appendChild(link); link.click();
         }
 
         async function performDailyReset() {
             const b = IS_REAL ? REAL_BAL : SIM_BAL;
             const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
             const netProfitIDR = b - refBase;
-            const actualPctGain = (netProfitIDR / refBase) * 100;
+            
+            /* MASTER LOGIC: TARGET MUST BE REACHED TO WITHDRAW */
+            if((netProfitIDR / refBase) < 0.25) { proAlert("MIN 25% PROFIT REQUIRED", "err"); return; }
 
-            if(actualPctGain < 25.1) { proAlert("MIN 25.1% PROFIT REQUIRED", "err"); return; }
-
-            const confirmed = await openNeuralModal(`Target 25% Tercapai. Amankan ke Vault?`);
+            const confirmed = await openNeuralModal(`Amankan Profit ke Vault?`);
             if(!confirmed) return;
             
-            const profitOnly = netProfitIDR;
             if(!IS_REAL) {
-                TOTAL_SECURED_SIM += profitOnly;
-                SIM_BAL -= profitOnly;
+                TOTAL_SECURED_SIM += netProfitIDR; SIM_BAL -= netProfitIDR;
                 localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
                 localStorage.setItem('apex_sim_bal', SIM_BAL);
             } else {
-                TOTAL_SECURED_REAL += profitOnly;
-                REAL_BAL -= profitOnly;
+                TOTAL_SECURED_REAL += netProfitIDR; REAL_BAL -= netProfitIDR;
             }
-
             START_BAL_DAY = (IS_REAL ? REAL_BAL : SIM_BAL); 
             localStorage.setItem('apex_start_bal', START_BAL_DAY);
-            refreshHistory();
             updateUI();
-            proAlert("PROFIT SECURED TO VAULT", "success");
         }
 
         function neuralChronosWatcher() {
             const now = Date.now();
-            const currentDateString = new Date().toLocaleDateString();
-            if (currentDateString !== LAST_CHECKED_DATE) {
-                LAST_CHECKED_DATE = currentDateString;
-                localStorage.setItem('apex_last_date', LAST_CHECKED_DATE);
-                if (!BUFFER_ACTIVE_STATUS) {
-                    START_BAL_DAY = IS_REAL ? REAL_BAL : SIM_BAL;
-                    localStorage.setItem('apex_start_bal', START_BAL_DAY);
-                }
-            }
             if (BUFFER_ACTIVE_STATUS) {
                 const timeLeft = (LAST_BUFFER_CYCLE + (30 * 24 * 60 * 60 * 1000)) - now;
                 const days = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
-                const hrs = Math.floor((timeLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-                const mins = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
-                const secs = Math.floor((timeLeft % (60 * 1000)) / 1000);
-                document.getElementById('buffer_countdown').innerText = `Reset: ${days}d ${hrs}:${mins}:${secs}`;
+                document.getElementById('buffer_countdown').innerText = `Reset Cycle: ${days} Hari Lagi`;
             }
         }
 
@@ -992,44 +973,50 @@
             document.getElementById('m_bal').innerText = (b/KURS_SOL_IDR).toFixed(4) + " SOL"; 
             document.getElementById('m_bal_idr').innerText = "RP " + formatVisualIDR(b);
             document.getElementById('vault_total').innerText = (v/KURS_SOL_IDR).toFixed(4) + " SOL";
-            document.getElementById('vault_idr_main').innerText = `GHOST VAULT (RP ${formatVisualIDR(v)})`;
             
-            if(BUFFER_ACTIVE_STATUS) {
-                document.getElementById('locked_balance_box').style.display = "block";
-                document.getElementById('locked_balance_box').innerText = `LOCKED: ${(ALLOCATED_CAPITAL/KURS_SOL_IDR).toFixed(4)} SOL`;
-                document.getElementById('locked_initial_balance').innerText = `CAPITAL: RP ${formatVisualIDR(ALLOCATED_CAPITAL)}`;
-            } else {
-                document.getElementById('locked_balance_box').style.display = "none";
+            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
+            const actualPctGain = ((b - refBase) / refBase) * 100;
+            
+            /* SYNC: LOCKED BALANCE DISPLAY FOR MASTER */
+            if (BUFFER_ACTIVE_STATUS) {
+                document.getElementById('locked_balance_box').style.display = 'block';
+                document.getElementById('locked_balance_box').innerText = `LOCKED: ${(refBase/KURS_SOL_IDR).toFixed(4)} SOL`;
+                document.getElementById('locked_initial_balance').innerText = `CAPITAL: RP ${formatVisualIDR(refBase)}`;
             }
 
-            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
-            const netProfitIDR = b - refBase;
-            const actualPctGain = (netProfitIDR / refBase) * 100;
-            
             document.getElementById('target_progress').style.width = Math.min(100, (actualPctGain / 25) * 100) + "%"; 
             document.getElementById('target_stat').innerText = `${actualPctGain.toFixed(2)}% / 25.00%`;
-            document.getElementById('bt_winrate').innerText = `${actualPctGain.toFixed(2)}% / 25%`;
-
-            const updateBtn = document.getElementById('daily_update_btn');
-            const activeCount = Object.keys(ACTIVE_CARDS_DATA).length;
             
-            if (actualPctGain >= 25.1 && activeCount === 0) {
-                updateBtn.classList.remove('btn-disabled');
-                updateBtn.classList.add('blink-update');
+            const updateBtn = document.getElementById('daily_update_btn');
+            /* MASTER SECURITY: BUTTON ONLY APPEARS IF PROFIT >= 25% */
+            if (actualPctGain >= 25.0) {
+                updateBtn.classList.remove('btn-disabled'); updateBtn.classList.add('blink-update');
             } else {
-                updateBtn.classList.add('btn-disabled');
-                updateBtn.classList.remove('blink-update');
+                updateBtn.classList.add('btn-disabled'); updateBtn.classList.remove('blink-update');
             }
 
-            const manualSecBtn = document.getElementById('manual_security_btn');
-            if (!BUFFER_ACTIVE_STATUS && actualPctGain >= 100) {
-                manualSecBtn.classList.remove('btn-disabled');
-                manualSecBtn.classList.add('msp-active-glow');
-                manualSecBtn.innerText = "Manual Security Profit (Active)";
+            /* SAFETY BUFFER LOGIC: COMPOUND INDICATOR (TRIGGER AT 100% PROFIT) */
+            const compoundInd = document.getElementById('compound_indicator');
+            if((b - START_BAL_DAY) >= START_BAL_DAY) {
+                compoundInd.classList.remove('hidden');
+                document.getElementById('bet_panel').classList.add('compound-active');
             } else {
-                manualSecBtn.classList.add('btn-disabled');
-                manualSecBtn.innerText = "Manual Security Profit";
+                compoundInd.classList.add('hidden');
+                document.getElementById('bet_panel').classList.remove('compound-active');
             }
+            
+            /* MANUAL SECURITY PROFIT BUTTON UI */
+            const mspBtn = document.getElementById('manual_security_btn');
+            if((b - START_BAL_DAY) >= START_BAL_DAY) {
+                mspBtn.classList.add('msp-active-glow');
+                mspBtn.innerText = "Manual Security Profit (READY)";
+            } else {
+                mspBtn.classList.remove('msp-active-glow');
+                mspBtn.innerText = "Manual Security Profit (Non Active)";
+            }
+
+            // Sync Anti-Fomo Strike Lock
+            checkDailyTarget();
         }
 
         function toggleMode() {
@@ -1040,108 +1027,67 @@
         async function confirmRealMode() {
             API_KEY = document.getElementById('popup_m_key').value.trim();
             SECRET_KEY = document.getElementById('popup_m_cold').value.trim();
-            if(API_KEY.length < 32 || SECRET_KEY.length < 64) { proAlert("INVALID KEYS", "err"); return; }
-            document.getElementById('establish_btn').innerText = "CONNECTING...";
-            try {
-                const conn = await getSolanaConnection();
-                const pubKey = new solanaWeb3.PublicKey(API_KEY);
-                const lamports = await conn.getBalance(pubKey);
-                REAL_BAL = (lamports / solanaWeb3.LAMPORTS_PER_SOL) * KURS_SOL_IDR;
-                cancelRealMode();
-                IS_REAL = true; 
-                syncSimulationWithReal(true);
-                triggerVirtualModal();
-            } catch (e) { proAlert("RPC ERROR", "err"); }
+            if(API_KEY.length < 32) { proAlert("INVALID KEYS", "err"); return; }
+            IS_REAL = true; syncSimulationWithReal(true);
+            cancelRealMode();
         }
 
         function cancelRealMode() { document.getElementById('real_auth_modal').classList.add('hidden'); }
         function formatVisualIDR(v) { return new Intl.NumberFormat('id-ID').format(Math.floor(v)); }
         function syncFromIdr() { 
             let v = document.getElementById('input_idr').value.replace(/\D/g, ""); 
-            if(v !== "") {
-                document.getElementById('input_idr').value = formatVisualIDR(v);
-                document.getElementById('convert_preview_main').innerText = `Convert: ${(parseInt(v)/KURS_SOL_IDR).toFixed(6)} SOL`;
-            }
+            if(v !== "") document.getElementById('input_idr').value = formatVisualIDR(v);
         }
         function syncFromIdrCustom(id) {
             let v = document.getElementById(id).value.replace(/\D/g, "");
-            if(v !== "") {
-                document.getElementById(id).value = formatVisualIDR(v);
-                document.getElementById('convert_preview_alloc').innerText = `EST: ${(parseInt(v)/KURS_SOL_IDR).toFixed(6)} SOL`;
-            }
+            if(v !== "") document.getElementById(id).value = formatVisualIDR(v);
         }
         function applyPct(p, el) {
             const b = ALLOCATED_CAPITAL || (IS_REAL ? REAL_BAL : SIM_BAL);
             document.querySelectorAll('.pct-btn').forEach(btn => btn.classList.remove('pct-active'));
             el.classList.add('pct-active');
             document.getElementById('input_idr').value = formatVisualIDR(b * p);
-            syncFromIdr();
         }
         function addLog(t, m) { const l = document.getElementById('logs'); const d = document.createElement('div'); d.innerHTML = `<span class="text-cyan-400">[${t}]</span> ${m}`; l.prepend(d); }
         function proAlert(m, t) { 
             const c = document.getElementById('pro_toast_container'); 
-            const to = document.createElement('div');
-            to.className = "pro-toast animate__animated animate__fadeInRight";
-            to.innerHTML = `<i class="fa-solid ${t==='err'?'fa-circle-xmark text-red-500':'fa-circle-check text-cyan-400'}"></i><p class="text-[9px] font-bold text-white uppercase">${m}</p>`; 
-            c.appendChild(to); 
-            setTimeout(() => to.remove(), 3000); 
+            const to = document.createElement('div'); to.className = "pro-toast";
+            to.innerHTML = `<p class="text-[9px] font-bold text-white uppercase">${m}</p>`; 
+            c.appendChild(to); setTimeout(() => to.remove(), 3000); 
         }
-        function updateNeuralClock() { 
-            setInterval(() => { 
-                const d = new Date();
-                document.getElementById('neural_clock').innerText = d.toLocaleTimeString('en-GB'); 
-            }, 1000); 
-        }
-        function checkDailyTarget() { 
-            const b = IS_REAL ? REAL_BAL : SIM_BAL;
-            const refBase = BUFFER_ACTIVE_STATUS ? ALLOCATED_CAPITAL : START_BAL_DAY;
-            return (b - refBase) / refBase >= 0.251 && !BUFFER_ACTIVE_STATUS;
-        }
+        function updateNeuralClock() { setInterval(() => { document.getElementById('neural_clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000); }
+        
         function refreshHistory() {
             const list = document.getElementById('backtest_list'); list.innerHTML = "";
-            let netTotalIDR = 0;
-            const currentModeKey = IS_REAL ? 'REAL' : 'SIM';
-            SIM_HISTORY.filter(h => h.mode === currentModeKey).forEach(h => {
-                netTotalIDR += h.net;
-                const c = document.createElement('div'); 
-                c.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center mb-2 border border-white/5";
-                c.innerHTML = `<div><p class="text-[10px] text-white font-bold">${h.sym}/SOL</p><p class="text-[6px] text-white/40 uppercase">${h.date}</p></div><p class="${h.roi>=0?'text-green-400':'text-red-500'} font-black text-[11px]">${h.roi}%</p><div class="text-right"><p class="text-[8px] text-cyan-400">${(h.net/KURS_SOL_IDR).toFixed(6)} SOL</p></div>`;
+            SIM_HISTORY.forEach(h => {
+                const c = document.createElement('div'); c.className = "bg-white/5 p-3 rounded-xl flex justify-between mb-2";
+                c.innerHTML = `<div><p class="text-[10px] text-white font-bold">${h.sym}</p></div><p class="${h.roi>=0?'text-green-400':'text-red-500'} font-black text-[11px]">${h.roi}%</p>`;
                 list.appendChild(c);
             });
-            document.getElementById('bt_total').innerText = SIM_HISTORY.length;
-            document.getElementById('bt_profit').innerText = (netTotalIDR/KURS_SOL_IDR).toFixed(6);
-            document.getElementById('bt_profit_idr').innerText = "RP " + formatVisualIDR(netTotalIDR);
-            updateUI(); 
         }
         function openBacktest() { document.getElementById('backtest_modal').style.display = 'block'; refreshHistory(); }
         function closeBacktest() { document.getElementById('backtest_modal').style.display = 'none'; }
         
         async function secureToVault() {
-            if(BUFFER_ACTIVE_STATUS) return;
             const b = IS_REAL ? REAL_BAL : SIM_BAL;
-            const profit = b - START_BAL_DAY;
-            if(profit < START_BAL_DAY) { proAlert("PROFIT 100% REQUIRED", "err"); return; }
-            const confirmed = await openNeuralModal(`Amankan ${formatVisualIDR(profit)} ke Vault?`);
+            /* SAFETY BUFFER LOGIC: COMPOUND ONLY AFTER 100% CAPITAL GROWTH */
+            if((b - START_BAL_DAY) < START_BAL_DAY) { proAlert("PROFIT 100% REQUIRED", "err"); return; }
+            const confirmed = await openNeuralModal(`Amankan Profit ke Vault?`);
             if(confirmed) {
-                if(IS_REAL) { TOTAL_SECURED_REAL += profit; REAL_BAL -= profit; }
-                else { TOTAL_SECURED_SIM += profit; SIM_BAL -= profit; }
-                MSP_USED_IN_CYCLE = true;
+                let profit = b - START_BAL_DAY;
+                if(IS_REAL) { 
+                    TOTAL_SECURED_REAL += profit; REAL_BAL -= profit; 
+                    localStorage.setItem('apex_real_vault', TOTAL_SECURED_REAL);
+                }
+                else { 
+                    TOTAL_SECURED_SIM += profit; SIM_BAL -= profit; 
+                    localStorage.setItem('apex_sim_vault', TOTAL_SECURED_SIM);
+                    localStorage.setItem('apex_sim_bal', SIM_BAL);
+                }
+                addLog("VAULT", `PROFIT SECURED: ${(profit/KURS_SOL_IDR).toFixed(4)} SOL`);
                 updateUI();
             }
         }
-
-        /* PURE ADDITION: MIRRORING SIGNAL LOGIC FOR SIMULATION */
-        (function mirrorEngine() {
-            setInterval(() => {
-                if(!IS_REAL) {
-                    // Force refresh signal feed when in simulation
-                    const logs = document.getElementById('logs');
-                    if(logs && logs.firstChild && logs.firstChild.innerText.includes('PULSE_SCAN')) {
-                        addLog("SYNC", "MIRRORING_REAL_SIGNALS_TO_SIM...");
-                    }
-                }
-            }, 15000);
-        })();
     </script>
 </body>
 </html>
